@@ -36,12 +36,13 @@ def transform(out_dir):
 	# transcode ogg
 	# TODO don't assume names
 	old_music = out_dir / "music.wav"
-	#subprocess.run(["oggenc", "--quality=8", str(old_music)])
+	subprocess.run(["oggenc", "--quality=8", str(old_music)])
 	old_music.unlink()
 
 def cleanup(out_dir):
-	# TODO make this suffix configurable
-	subprocess.run(["find", str(out_dir), "-name", "\"__*\"", "-print", "-delete"])
+	# TODO make this configurable
+	subprocess.run(["find", str(out_dir), "-name", "__*", "-print", "-delete"])
+	subprocess.run(["find", str(out_dir), "-name", "*.old", "-print", "-delete"])
 
 def run(args):
 	if not args.input_path.exists():
@@ -55,14 +56,19 @@ def run(args):
 
 	# find which folders are valid
 	for candidate_obj in args.input_path.iterdir():
+		if candidate_obj.parts[-1].startswith(args.internal_prefix):
+			continue
+
 		if not candidate_obj.is_dir():
 			continue
 
 		for thing in candidate_obj.iterdir():
 			if thing.parts[-1].endswith(".ssc"):
-				logging.debug(f"Candidate: {candidate_obj}")
+				logging.debug(f"Found simfile directory: {candidate_obj}")
 				dirs.append(candidate_obj)
 				break
+		else:
+			logging.warning(f"Candidate simfile directory '{candidate_obj}' has no chart file")
 
 	logging.info(f"Found {len(dirs)} simfile directories")
 
@@ -87,6 +93,8 @@ def main():
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
 	parser.add_argument("input_path", type=Path)
 	parser.add_argument("output_path", type=Path)
+	parser.add_argument("--internal-prefix", type=str, default="__",
+		help="Objects with this internal prefix will not show up in the output folder (default: '%(default)s')")
 	args = parser.parse_args()
 	logging.basicConfig(level=logging.DEBUG)
 	logging.debug(args)
