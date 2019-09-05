@@ -24,7 +24,11 @@ def transform(out_dir):
 			ssc = re.sub("LABELS:.*?;", "LABELS:;", ssc, flags=(re.DOTALL | re.MULTILINE))
 
 			# add ITG offset :(
-			# print(re.search("OFFSET=(.+);", ssc))
+			offset = float(re.search("OFFSET:(.+?);", ssc).group(1))
+			print(offset)
+			offset += 0.009
+			print(offset)
+			ssc = re.sub("OFFSET:(.+?);", f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
 
 			with open(thing, 'w') as f:
 				f.write(ssc)
