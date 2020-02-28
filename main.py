@@ -24,11 +24,10 @@ def transform(out_dir):
 			ssc = re.sub("LABELS:.*?;", "LABELS:;", ssc, flags=(re.DOTALL | re.MULTILINE))
 
 			# add ITG offset :(
-			offset = float(re.search("OFFSET:(.+?);", ssc).group(1))
-			print(offset)
+			offset_regex = "OFFSET:(-?\d+?(?:\.\d+?)?);"
+			offset = float(re.search(offset_regex, ssc).group(1))
 			offset += 0.009
-			print(offset)
-			ssc = re.sub("OFFSET:(.+?);", f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
+			ssc = re.sub(offset_regex, f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
 
 			with open(thing, 'w') as f:
 				f.write(ssc)
@@ -36,8 +35,13 @@ def transform(out_dir):
 	# transcode ogg
 	# TODO don't assume names
 	old_music = out_dir / "music.wav"
-	subprocess.run(["oggenc", "--quality=8", str(old_music)])
+	ogg_result = subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True)
+	if ogg_result.returncode == 0:
+		logging.error(f"oggenc failed with return code {ogg_result.returncode} and stderr\n{ogg_result.stderr}")
+		return False
+
 	old_music.unlink()
+	return True
 
 def cleanup(out_dir):
 	# TODO make this configurable
@@ -52,52 +56,76 @@ def run(args):
 		logging.error(f"Output path '{args.output_path}' exists and would be overwritten")
 		raise Exception
 
+	# TODO untangle this
 	dirs = []
+	files = []
 
-	# find which folders are valid
+	# TODO can't this be a separate function?
+	# copy over valid folders
 	for candidate_obj in args.input_path.iterdir():
 		if candidate_obj.parts[-1].startswith(args.internal_prefix):
 			continue
 
-		if not candidate_obj.is_dir():
-			continue
+		if candidate_obj.is_file():
+			logging.debug(f"Found misc. root file '{candidate_obj}'")
+			files.append(candidate_obj)
 
-		for thing in candidate_obj.iterdir():
-			if thing.parts[-1].endswith(".ssc"):
-				logging.debug(f"Found simfile directory: {candidate_obj}")
-				dirs.append(candidate_obj)
-				break
+		elif candidate_obj.is_dir():
+			for thing in candidate_obj.iterdir():
+				if thing.parts[-1].endswith(".ssc"):
+					logging.debug(f"Found simfile directory '{candidate_obj}'")
+					dirs.append(candidate_obj)
+					break
+			else:
+				logging.warning(f"Directory '{candidate_obj}' has no chart file")
+
 		else:
-			logging.warning(f"Candidate simfile directory '{candidate_obj}' has no chart file")
+			logging.warning(f"Unknown object '{candidate_obj}'")
 
 	logging.info(f"Found {len(dirs)} simfile directories")
 
-	# copy folders
 	args.output_path.mkdir(parents=True)
-	out_dirs = []
+
+	# copy support files first
+	for f in files:
+		shutil.copy(f, args.output_path / f.parts[-1])
+
+	# copy folders
+	simfile_dirs = []
 	for d in dirs:
 		out_dir = args.output_path / d.parts[-1]
-		out_dirs.append(out_dir)
-		# PYDUMB
-		shutil.copytree(d, str(out_dir))
+		simfile_dirs.append(out_dir)
+		shutil.copytree(d, out_dir)
 
 	# transform folders
-	for d in out_dirs:
+	for d in simfile_dirs:
 		transform(d)
 
 	# clean up internal files
-	for d in out_dirs:
+	for d in simfile_dirs:
 		cleanup(d)
 
 def main():
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
 	parser.add_argument("input_path", type=Path)
 	parser.add_argument("output_path", type=Path)
+	parser.add_argument('-v', '--verbose', action='count', default=0,
+		help='Output more details (stacks)')
+	parser.add_argument('-q', '--quiet', action='count', default=0,
+		help='Output less details (stacks)')
 	parser.add_argument("--internal-prefix", type=str, default="__",
 		help="Objects with this internal prefix will not show up in the output folder (default: '%(default)s')")
+	parser.add_argument("-d", "--log-debug", )
 	args = parser.parse_args()
-	logging.basicConfig(level=logging.DEBUG)
+
+	# set up logging
+	log_levels = [logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
+	requested_log_level = 2 + args.verbose - args.quiet
+	requested_log_level = min(0, max(requested_log_level, len(log_levels) - 1))
+	logging.basicConfig(level=log_levels[requested_log_level])
+
 	logging.debug(args)
+
 	run(args)
 
 if __name__ == "__main__":

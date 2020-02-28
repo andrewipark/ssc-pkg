@@ -2,17 +2,18 @@ from setuptools import find_packages, setup
 
 setup(
 	name='ssc-pkg',
-	version='0.1',
+	version='0.2',
 	
 	packages=find_packages(),
 	include_package_data=True,
 	
 	zip_safe=False,
 	
-	python_requires='~=3.7', # might actually be ~=3.6, who knows
+	# These are just based on what I have installed and are probably conservative
+	python_requires='~=3.7', # ~=3.6?
 	install_requires=[
-		'numpy~=1.17',
-		'pyyaml~=5.1',
+		'numpy~=1.18',
+		'pyyaml~=5.3',
 	],
 	
 	classifiers=[
