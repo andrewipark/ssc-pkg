@@ -50,11 +50,9 @@ def cleanup(out_dir):
 
 def run(args):
 	if not args.input_path.exists():
-		logging.error(f"Input path '{args.input_path}' doesn't exist")
-		raise Exception
+		raise Exception(f"Input path '{args.input_path}' doesn't exist")
 	if args.output_path.exists():
-		logging.error(f"Output path '{args.output_path}' exists and would be overwritten")
-		raise Exception
+		raise Exception(f"Output path '{args.output_path}' exists and would be overwritten")
 
 	# TODO untangle this
 	dirs = []
@@ -115,7 +113,6 @@ def main():
 		help='Output less details (stacks)')
 	parser.add_argument("--internal-prefix", type=str, default="__",
 		help="Objects with this internal prefix will not show up in the output folder (default: '%(default)s')")
-	parser.add_argument("-d", "--log-debug", )
 	args = parser.parse_args()
 
 	# set up logging
@@ -126,7 +123,10 @@ def main():
 
 	logging.debug(args)
 
-	run(args)
+	try:
+		run(args)
+	except Exception as e:
+		logging.critical('Unhandled exception interpreted as critical error', exc_info = e)
 
 if __name__ == "__main__":
 	main()
