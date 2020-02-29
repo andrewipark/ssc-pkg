@@ -27,7 +27,7 @@ def args_path_sanity_check(args):
 		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
 			"which could overwrite files")
 
-def get_file_list(input_dir, filter_regex = None):
+def get_file_list(input_dir, ignore_regex = None):
 	"""Given an input directory, returns a processed listing of objects.
 
 	The first list contains tuples of (simfile_dir, ssc_file).
@@ -35,9 +35,9 @@ def get_file_list(input_dir, filter_regex = None):
 
 	This assumes that simfile directories are never nested inside each other.
 	"""
-	if filter_regex is None:
-		filter_regex = []
-	filter_regex = [re.compile(r) for r in filter_regex]
+	if ignore_regex is None:
+		ignore_regex = []
+	ignore_regex = [re.compile(r) for r in ignore_regex]
 
 	simfiles = []
 	non_simfiles = []
@@ -51,7 +51,16 @@ def get_file_list(input_dir, filter_regex = None):
 		level = logging.DEBUG
 		is_a_message = None
 
-		if curr.is_file():
+		ignore_matches = list(filter(None, [r.match(curr.parts[-1]) for r in ignore_regex]))
+		if any(ignore_matches):
+			is_a_message = 'ignored because of regexes: ' \
+				+ ', '.join([
+					f"'{match.re.pattern}' matched '{match.group()}'"
+					for match in ignore_matches
+				])
+
+		# at this point we know that the file is not ignored
+		elif curr.is_file():
 			non_simfiles.append(curr)
 			is_a_message = 'a miscellaneous file'
 		elif curr.is_dir():
@@ -125,7 +134,7 @@ def run(args):
 	args_path_sanity_check(args)
 
 	logging.info(f'Exploring input directory for files')
-	dirs, files = get_file_list(args.input_dir)
+	dirs, files = get_file_list(args.input_dir, args.ignore_regex)
 	logging.info(f'Found {len(dirs)} simfile directories')
 
 	if args.dry_run:
@@ -162,8 +171,8 @@ def main():
 		help='Output less details (stacks)')
 	parser.add_argument('--dry-run', action='store_true',
 		help='List files and folders to be copied without doing anything else')
-	parser.add_argument("--internal-prefix", type=str, default="__",
-		help="Objects with this internal prefix will not show up in the output folder (default: '%(default)s')")
+	parser.add_argument("--ignore-regex", nargs='+', type=str, default=["^__", '.*\\.old$'],
+		help="Objects matching any regex will not be considered (default: '%(default)s')")
 	args = parser.parse_args()
 
 	# set up logging
