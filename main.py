@@ -133,9 +133,8 @@ def main():
 	# set up logging
 	log_levels = [logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
 	requested_log_level = 2 + args.verbose - args.quiet
-	requested_log_level = min(0, max(requested_log_level, len(log_levels) - 1))
+	requested_log_level = max(0, min(requested_log_level, len(log_levels) - 1))
 	logging.basicConfig(level=log_levels[requested_log_level])
-
 	logging.debug(args)
 
 	try:
