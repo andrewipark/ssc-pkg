@@ -30,7 +30,8 @@ def args_path_sanity_check(args):
 def get_file_list(input_dir, ignore_regex = None):
 	"""Given an input directory, returns a processed listing of objects.
 
-	The first list contains tuples of (simfile_dir, ssc_file).
+	The first list contains tuples of (simfile_dir, ssc_file),
+	so that simfile_dir / ssc_file gives the full location of the ssc file.
 	The second list is miscellaneous directories and files.
 
 	This assumes that simfile directories are never nested inside each other.
@@ -72,7 +73,7 @@ def get_file_list(input_dir, ignore_regex = None):
 				explore.extend(children)
 				is_a_message = 'a miscellaneous directory'
 			elif len(possible_ssc_candidates) == 1:
-				simfiles.append(curr)
+				simfiles.append((curr, possible_ssc_candidates[0].parts[-1]))
 				level = logging.INFO
 				is_a_message = 'a simfile directory'
 			else:
@@ -149,6 +150,7 @@ def run(args):
 	# copy folders
 	simfile_dirs = []
 	for d in dirs:
+		d = d[0]
 		out_dir = args.output_dir / d.parts[-1]
 		simfile_dirs.append(out_dir)
 		shutil.copytree(d, out_dir)
