@@ -1,4 +1,5 @@
 language: python
 python:
   - '3.8'
+install: pip install -e .
 script: python3 main.py --help
