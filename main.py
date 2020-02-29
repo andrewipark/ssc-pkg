@@ -50,9 +50,9 @@ def cleanup(out_dir):
 
 def run(args):
 	if not args.input_path.exists():
-		raise Exception(f"Input path '{args.input_path}' doesn't exist")
+		raise FileNotFoundError(f"Input path '{args.input_path}' doesn't exist")
 	if args.output_path.exists():
-		raise Exception(f"Output path '{args.output_path}' exists and would be overwritten")
+		raise FileExistsError(f"Output path '{args.output_path}' exists and would be overwritten")
 
 	# TODO untangle this
 	dirs = []
