@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+from collections import deque
 import logging
 import re
 import shutil
@@ -25,6 +26,60 @@ def args_path_sanity_check(args):
 	if err_child:
 		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
 			"which could overwrite files")
+
+def get_file_list(input_dir, filter_regex = None):
+	"""Given an input directory, returns a processed listing of objects.
+
+	The first list contains tuples of (simfile_dir, ssc_file).
+	The second list is miscellaneous directories and files.
+
+	This assumes that simfile directories are never nested inside each other.
+	"""
+	if filter_regex is None:
+		filter_regex = []
+	filter_regex = [re.compile(r) for r in filter_regex]
+
+	simfiles = []
+	non_simfiles = []
+
+	# walk along the tree
+	# DANGER if directory structure is not a tree
+	explore = deque([input_dir])
+	while len(explore) > 0:
+		curr = explore.popleft() # BFS, but it shouldn't matter
+
+		level = logging.DEBUG
+		is_a_message = None
+
+		if curr.is_file():
+			non_simfiles.append(curr)
+			is_a_message = 'a miscellaneous file'
+		elif curr.is_dir():
+			children = list(curr.iterdir())
+
+			# TODO no handling of sm files
+			possible_ssc_candidates = list(filter(lambda p: p.parts[-1].endswith('.ssc'), children))
+			if len(possible_ssc_candidates) == 0:
+				explore.extend(children)
+				is_a_message = 'a miscellaneous directory'
+			elif len(possible_ssc_candidates) == 1:
+				simfiles.append(curr)
+				level = logging.INFO
+				is_a_message = 'a simfile directory'
+			else:
+				# intentionally ignore
+				level = logging.ERROR
+				is_a_message = f'a malformed simfile directory with {len(possible_ssc_candidates)} step data files '\
+					f'({[p.parts[-1] for p in possible_ssc_candidates]})'
+
+		else:
+			# intentionally do nothing
+			level = logging.WARNING
+			is_a_message = 'neither a file nor a directory'
+
+		logging.log(level, f'\'{curr}\' is {is_a_message}')
+
+	return (simfiles, non_simfiles)
 
 def transform(out_dir):
 	# transform ssc data
@@ -69,33 +124,9 @@ def cleanup(out_dir):
 def run(args):
 	args_path_sanity_check(args)
 
-	# TODO untangle this
-	dirs = []
-	files = []
-
-	# TODO can't this be a separate function?
-	# copy over valid folders
-	for candidate_obj in args.input_dir.iterdir():
-		if candidate_obj.parts[-1].startswith(args.internal_prefix):
-			continue
-
-		if candidate_obj.is_file():
-			logging.debug(f"Found misc. root file '{candidate_obj}'")
-			files.append(candidate_obj)
-
-		elif candidate_obj.is_dir():
-			for thing in candidate_obj.iterdir():
-				if thing.parts[-1].endswith(".ssc"):
-					logging.debug(f"Found simfile directory '{candidate_obj}'")
-					dirs.append(candidate_obj)
-					break
-			else:
-				logging.warning(f"Directory '{candidate_obj}' has no chart file")
-
-		else:
-			logging.warning(f"Unknown object '{candidate_obj}'")
-
-	logging.info(f"Found {len(dirs)} simfile directories")
+	logging.info(f'Exploring input directory for files')
+	dirs, files = get_file_list(args.input_dir)
+	logging.info(f'Found {len(dirs)} simfile directories')
 
 	if args.dry_run:
 		return
