@@ -52,7 +52,7 @@ def get_file_list(input_dir, ignore_regex = None):
 		level = logging.DEBUG
 		is_a_message = None
 
-		ignore_matches = list(filter(None, [r.match(curr.parts[-1]) for r in ignore_regex]))
+		ignore_matches = list(filter(None, [r.match(curr.name) for r in ignore_regex]))
 		if any(ignore_matches):
 			is_a_message = 'ignored because of regexes: ' \
 				+ ', '.join([
@@ -68,19 +68,19 @@ def get_file_list(input_dir, ignore_regex = None):
 			children = list(curr.iterdir())
 
 			# TODO no handling of sm files
-			possible_ssc_candidates = list(filter(lambda p: p.parts[-1].endswith('.ssc'), children))
+			possible_ssc_candidates = list(filter(lambda p: p.suffix == '.ssc', children))
 			if len(possible_ssc_candidates) == 0:
 				explore.extend(children)
 				is_a_message = 'a miscellaneous directory'
 			elif len(possible_ssc_candidates) == 1:
-				simfiles.append((curr, possible_ssc_candidates[0].parts[-1]))
+				simfiles.append((curr, possible_ssc_candidates[0].name))
 				level = logging.INFO
 				is_a_message = 'a simfile directory'
 			else:
 				# intentionally ignore
 				level = logging.ERROR
 				is_a_message = f'a malformed simfile directory with {len(possible_ssc_candidates)} step data files '\
-					f'({[p.parts[-1] for p in possible_ssc_candidates]})'
+					f'({[p.name for p in possible_ssc_candidates]})'
 
 		else:
 			# intentionally do nothing
@@ -96,7 +96,7 @@ def transform(out_dir):
 	# TODO don't assume names, have this sent down from above code
 	# TODO use an actual library for this
 	for thing in out_dir.iterdir():
-		if thing.parts[-1].endswith(".ssc"):
+		if thing.suffix == '.ssc':
 			with open(thing) as f:
 				ssc = f.read()
 
@@ -145,13 +145,13 @@ def run(args):
 
 	# copy support files first
 	for f in files:
-		shutil.copy(f, args.output_dir / f.parts[-1])
+		shutil.copy(f, args.output_dir / f.name)
 
 	# copy folders
 	simfile_dirs = []
 	for d in dirs:
 		d = d[0]
-		out_dir = args.output_dir / d.parts[-1]
+		out_dir = args.output_dir / d.name
 		simfile_dirs.append(out_dir)
 		shutil.copytree(d, out_dir)
 
