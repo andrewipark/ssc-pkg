@@ -8,6 +8,24 @@ import subprocess
 import sys
 from pathlib import Path
 
+def args_path_sanity_check(args):
+	if not args.input_dir.exists():
+		raise FileNotFoundError(f"Input directory '{args.input_dir}' doesn't exist")
+	input_dir_resolved = args.input_dir.resolve()
+	output_dir_resolved = args.output_dir.resolve()
+	if input_dir_resolved == output_dir_resolved:
+		raise ValueError('Input and output directories are the same, which would overwrite files')
+
+	err_parent, err_child = None, None
+	if input_dir_resolved in output_dir_resolved.parents:
+		err_parent, err_child = 'input', 'output'
+	if output_dir_resolved in input_dir_resolved.parents:
+		err_parent, err_child = 'output', 'input'
+
+	if err_child:
+		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
+			"which could overwrite files")
+
 def transform(out_dir):
 	# transform ssc data
 	# TODO don't assume names, have this sent down from above code
@@ -49,10 +67,7 @@ def cleanup(out_dir):
 	subprocess.run(["find", str(out_dir), "-name", "*.old", "-print", "-delete"])
 
 def run(args):
-	if not args.input_path.exists():
-		raise FileNotFoundError(f"Input path '{args.input_path}' doesn't exist")
-	if args.output_path.exists():
-		raise FileExistsError(f"Output path '{args.output_path}' exists and would be overwritten")
+	args_path_sanity_check(args)
 
 	# TODO untangle this
 	dirs = []
@@ -60,7 +75,7 @@ def run(args):
 
 	# TODO can't this be a separate function?
 	# copy over valid folders
-	for candidate_obj in args.input_path.iterdir():
+	for candidate_obj in args.input_dir.iterdir():
 		if candidate_obj.parts[-1].startswith(args.internal_prefix):
 			continue
 
@@ -82,16 +97,16 @@ def run(args):
 
 	logging.info(f"Found {len(dirs)} simfile directories")
 
-	args.output_path.mkdir(parents=True)
+	args.output_dir.mkdir(parents=True)
 
 	# copy support files first
 	for f in files:
-		shutil.copy(f, args.output_path / f.parts[-1])
+		shutil.copy(f, args.output_dir / f.parts[-1])
 
 	# copy folders
 	simfile_dirs = []
 	for d in dirs:
-		out_dir = args.output_path / d.parts[-1]
+		out_dir = args.output_dir / d.parts[-1]
 		simfile_dirs.append(out_dir)
 		shutil.copytree(d, out_dir)
 
@@ -105,8 +120,8 @@ def run(args):
 
 def main():
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
-	parser.add_argument("input_path", type=Path)
-	parser.add_argument("output_path", type=Path)
+	parser.add_argument("input_dir", type=Path)
+	parser.add_argument("output_dir", type=Path)
 	parser.add_argument('-v', '--verbose', action='count', default=0,
 		help='Output more details (stacks)')
 	parser.add_argument('-q', '--quiet', action='count', default=0,
