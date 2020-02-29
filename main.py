@@ -49,19 +49,19 @@ def get_file_list(input_dir, ignore_regex = None):
 	while len(explore) > 0:
 		curr = explore.popleft() # BFS, but it shouldn't matter
 
-		level = logging.DEBUG
-		is_a_message = None
-
 		ignore_matches = list(filter(None, [r.match(curr.name) for r in ignore_regex]))
 		if any(ignore_matches):
-			is_a_message = 'ignored because of regexes: ' \
+			logging.debug(f"'{curr}' ignored because of regexes: " \
 				+ ', '.join([
 					f"'{match.re.pattern}' matched '{match.group()}'"
 					for match in ignore_matches
-				])
+				]))
+			continue
 
-		# at this point we know that the file is not ignored
-		elif curr.is_file():
+		level = logging.DEBUG
+		is_a_message = None
+
+		if curr.is_file():
 			non_simfiles.append(curr)
 			is_a_message = 'a miscellaneous file'
 		elif curr.is_dir():
