@@ -97,6 +97,9 @@ def run(args):
 
 	logging.info(f"Found {len(dirs)} simfile directories")
 
+	if args.dry_run:
+		return
+
 	args.output_dir.mkdir(parents=True)
 
 	# copy support files first
@@ -126,6 +129,8 @@ def main():
 		help='Output more details (stacks)')
 	parser.add_argument('-q', '--quiet', action='count', default=0,
 		help='Output less details (stacks)')
+	parser.add_argument('--dry-run', action='store_true',
+		help='List files and folders to be copied without doing anything else')
 	parser.add_argument("--internal-prefix", type=str, default="__",
 		help="Objects with this internal prefix will not show up in the output folder (default: '%(default)s')")
 	args = parser.parse_args()
