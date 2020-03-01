@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+"""Command-line runner for ssc-pkg"""
 
 import argparse
 from collections import deque
@@ -6,16 +7,17 @@ import logging
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 def args_path_sanity_check(args):
+	"""Do basic sanity checks for input and output directories"""
 	if not args.input_dir.exists():
 		raise FileNotFoundError(f"Input directory '{args.input_dir}' doesn't exist")
 	input_dir_resolved = args.input_dir.resolve()
 	output_dir_resolved = args.output_dir.resolve()
 	if input_dir_resolved == output_dir_resolved:
-		raise ValueError(f"Input and output directories both resolve to '{input_dir_resolved}', which would overwrite files")
+		raise ValueError(f"Input and output directories both resolve to '{input_dir_resolved}',"
+			'which would overwrite files')
 
 	err_parent, err_child = None, None
 	if input_dir_resolved in output_dir_resolved.parents:
@@ -27,7 +29,7 @@ def args_path_sanity_check(args):
 		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
 			"which could overwrite files")
 
-def get_file_list(input_dir, filter_function = None, handler = None, ignore_handler = None):
+def get_file_list(input_dir, filter_function=None, handler=None, ignore_handler=None):
 	"""Walk an input directory and return a processed listing of objects.
 
 	A partial replacement for os.walk on Path objects.
@@ -57,7 +59,7 @@ def get_file_list(input_dir, filter_function = None, handler = None, ignore_hand
 			handler(curr)
 		yield curr
 
-def regex_path_name_match(regex = None):
+def regex_path_name_match(regex=None):
 	"""Return a function that:
 	Given a path, return regex matches.
 	"""
@@ -70,6 +72,7 @@ def regex_path_name_match(regex = None):
 	return filter_function
 
 def what_is_log_helper(path):
+	"""Log the basic type of an object"""
 	log_level = logging.DEBUG
 	if path.is_file():
 		is_a_message = 'a file'
@@ -81,6 +84,7 @@ def what_is_log_helper(path):
 	logging.log(log_level, f"'{path}' is {is_a_message}")
 
 def ignore_regex_log_helper(path, matches):
+	"""Output helpful information about regex matches"""
 	logging.debug(f"'{path}' ignored because of regexes: " \
 		+ ', '.join([
 			f"'{match.re.pattern}' matched '{match.group()}'"
@@ -88,7 +92,7 @@ def ignore_regex_log_helper(path, matches):
 		]))
 
 def transform(out_dir):
-	# transform ssc data
+	"""TODO THIS SHOULD NOT BE HERE"""
 	# TODO don't assume names, have this sent down from above code
 	# TODO use an actual library for this
 	for thing in out_dir.iterdir():
@@ -103,7 +107,7 @@ def transform(out_dir):
 			ssc = re.sub("LABELS:.*?;", "LABELS:;", ssc, flags=(re.DOTALL | re.MULTILINE))
 
 			# add ITG offset :(
-			offset_regex = "OFFSET:(-?\d+?(?:\.\d+?)?);"
+			offset_regex = r'OFFSET:(-?\d+?(?:\.\d+?)?);'
 			offset = float(re.search(offset_regex, ssc).group(1))
 			offset += 0.009
 			ssc = re.sub(offset_regex, f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
@@ -113,19 +117,22 @@ def transform(out_dir):
 
 	# transcode ogg
 	# TODO don't assume names
-	old_music = out_dir / "music.wav"
-	ogg_result = subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True)
-	if ogg_result.returncode == 0:
-		logging.error(f"oggenc failed with return code {ogg_result.returncode} and stderr\n{ogg_result.stderr}")
-		return False
-
-	old_music.unlink()
+	try:
+		old_music = out_dir / "music.wav"
+		subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True, check=True)
+		old_music.unlink()
+	except subprocess.CalledProcessError as exc:
+		logging.error(f"oggenc failed with return code {exc.returncode} and stderr\n{exc.stderr}")
+	except FileNotFoundError:
+		# FIXME this should really be moved elsewhere
+		logging.error(f'oggenc unavailable')
 	return True
 
 def run(args):
+	"""Top-level command to start the build process"""
 	args_path_sanity_check(args)
 
-	# explore
+	## explore
 	files = list(get_file_list(args.input_dir,
 		filter_function = regex_path_name_match(args.ignore_regex),
 		handler = what_is_log_helper,
@@ -134,7 +141,8 @@ def run(args):
 	# FIXME breaks horribly if multiple simfiles in same directory
 	simfiles = [p for p in files if p.suffix == '.ssc']
 
-	logging.info(f'Found {len(simfiles)} simfile directories:\n' + '\n'.join([str(p.parent) for p in simfiles]))
+	logging.info(f'Found {len(simfiles)} simfile directories:\n'
+		+ '\n'.join([str(p.parent) for p in simfiles]))
 
 	if args.dry_run:
 		return
@@ -145,18 +153,19 @@ def run(args):
 	except FileExistsError:
 		logging.warning(f"Output directory '{args.output_dir}' already exists and will be overwritten")
 
-	for f in files:
-		dest = args.output_dir / (f.relative_to(args.input_dir))
-		if f.is_file():
-			shutil.copy(f, dest)
-		elif f.is_dir():
-			dest.mkdir(exist_ok = True)
+	for path in files:
+		dest = args.output_dir / (path.relative_to(args.input_dir))
+		if path.is_file():
+			shutil.copy(path, dest)
+		elif path.is_dir():
+			dest.mkdir(exist_ok=True)
 
 	# transform
-	for d in simfiles:
-		transform(d.parent)
+	for simfile in simfiles:
+		transform(simfile.parent)
 
 def main():
+	"""Initial command line entry point to set up logging and argument parsing"""
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
 	parser.add_argument("input_dir", type=Path)
 	parser.add_argument("output_dir", type=Path)
@@ -177,10 +186,7 @@ def main():
 	logging.basicConfig(level=log_levels[requested_log_level])
 	logging.debug(args)
 
-	try:
-		run(args)
-	except Exception as e:
-		logging.critical('Unhandled exception interpreted as critical error', exc_info = e)
+	run(args)
 
 if __name__ == "__main__":
 	main()
