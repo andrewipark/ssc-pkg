@@ -122,11 +122,6 @@ def transform(out_dir):
 	old_music.unlink()
 	return True
 
-def cleanup(out_dir):
-	# TODO make this configurable
-	subprocess.run(["find", str(out_dir), "-name", "__*", "-print", "-delete"])
-	subprocess.run(["find", str(out_dir), "-name", "*.old", "-print", "-delete"])
-
 def run(args):
 	args_path_sanity_check(args)
 
@@ -160,10 +155,6 @@ def run(args):
 	# transform
 	for d in simfiles:
 		transform(d.parent)
-
-	# clean up internal files
-	for d in simfiles:
-		cleanup(d)
 
 def main():
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
