@@ -15,7 +15,7 @@ def args_path_sanity_check(args):
 	input_dir_resolved = args.input_dir.resolve()
 	output_dir_resolved = args.output_dir.resolve()
 	if input_dir_resolved == output_dir_resolved:
-		raise ValueError('Input and output directories are the same, which would overwrite files')
+		raise ValueError(f"Input and output directories both resolve to '{input_dir_resolved}', which would overwrite files")
 
 	err_parent, err_child = None, None
 	if input_dir_resolved in output_dir_resolved.parents:
@@ -27,69 +27,65 @@ def args_path_sanity_check(args):
 		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
 			"which could overwrite files")
 
-def get_file_list(input_dir, ignore_regex = None):
-	"""Given an input directory, returns a processed listing of objects.
+def get_file_list(input_dir, filter_function = None, handler = None, ignore_handler = None):
+	"""Walk an input directory and return a processed listing of objects.
 
-	The first list contains tuples of (simfile_dir, ssc_file),
-	so that simfile_dir / ssc_file gives the full location of the ssc file.
-	The second list is miscellaneous directories and files.
+	A partial replacement for os.walk on Path objects.
 
-	This assumes that simfile directories are never nested inside each other.
+	The functions must be as follows:
+	filter_function(curr)
+	handler(curr)
+	ignore_handler(curr, filter_function(path))
+
+	DANGER will infinite loop if directory structure is not a tree
 	"""
-	if ignore_regex is None:
-		ignore_regex = []
-	ignore_regex = [re.compile(r) for r in ignore_regex]
 
-	simfiles = []
-	non_simfiles = []
-
-	# walk along the tree
-	# DANGER if directory structure is not a tree
 	explore = deque([input_dir])
 	while len(explore) > 0:
-		curr = explore.popleft() # BFS, but it shouldn't matter
+		curr = explore.popleft()
 
-		ignore_matches = list(filter(None, [r.match(curr.name) for r in ignore_regex]))
-		if any(ignore_matches):
-			logging.debug(f"'{curr}' ignored because of regexes: " \
-				+ ', '.join([
-					f"'{match.re.pattern}' matched '{match.group()}'"
-					for match in ignore_matches
-				]))
-			continue
+		if filter_function:
+			filter_result = filter_function(curr)
+			if filter_result:
+				if ignore_handler:
+					ignore_handler(curr, filter_result)
+				continue
 
-		level = logging.DEBUG
-		is_a_message = None
+		if curr.is_dir():
+			explore.extend(list(curr.iterdir()))
+		if handler:
+			handler(curr)
+		yield curr
 
-		if curr.is_file():
-			non_simfiles.append(curr)
-			is_a_message = 'a miscellaneous file'
-		elif curr.is_dir():
-			children = list(curr.iterdir())
+def regex_path_name_match(regex = None):
+	"""Return a function that:
+	Given a path, return regex matches.
+	"""
+	if regex is None:
+		regex = []
+	regex = [re.compile(r) for r in regex]
 
-			# TODO no handling of sm files
-			possible_ssc_candidates = list(filter(lambda p: p.suffix == '.ssc', children))
-			if len(possible_ssc_candidates) == 0:
-				explore.extend(children)
-				is_a_message = 'a miscellaneous directory'
-			elif len(possible_ssc_candidates) == 1:
-				simfiles.append((curr, possible_ssc_candidates[0].name))
-				level = logging.INFO
-				is_a_message = 'a simfile directory'
-			else:
-				# intentionally ignore
-				level = logging.ERROR
-				is_a_message = f'a malformed simfile directory with {len(possible_ssc_candidates)} step data files '\
-					f'({[p.name for p in possible_ssc_candidates]})'
+	def filter_function(path):
+		return list(filter(None, [r.match(path.name) for r in regex]))
+	return filter_function
 
-		else:
-			# intentionally do nothing
-			level = logging.WARNING
-			is_a_message = 'neither a file nor a directory'
+def what_is_log_helper(path):
+	log_level = logging.DEBUG
+	if path.is_file():
+		is_a_message = 'a file'
+	elif path.is_dir():
+		is_a_message = 'a directory'
+	else:
+		log_level = logging.WARNING
+		is_a_message = f'something else statted as:\n{path.stat()}'
+	logging.log(log_level, f"'{path}' is {is_a_message}")
 
-		logging.log(level, f'\'{curr}\' is {is_a_message}')
-
-	return (simfiles, non_simfiles)
+def ignore_regex_log_helper(path, matches):
+	logging.debug(f"'{path}' ignored because of regexes: " \
+		+ ', '.join([
+			f"'{match.re.pattern}' matched '{match.group()}'"
+			for match in matches
+		]))
 
 def transform(out_dir):
 	# transform ssc data
@@ -134,33 +130,39 @@ def cleanup(out_dir):
 def run(args):
 	args_path_sanity_check(args)
 
-	logging.info(f'Exploring input directory for files')
-	dirs, files = get_file_list(args.input_dir, args.ignore_regex)
-	logging.info(f'Found {len(dirs)} simfile directories')
+	# explore
+	files = list(get_file_list(args.input_dir,
+		filter_function = regex_path_name_match(args.ignore_regex),
+		handler = what_is_log_helper,
+		ignore_handler = ignore_regex_log_helper
+	))
+	# FIXME breaks horribly if multiple simfiles in same directory
+	simfiles = [p for p in files if p.suffix == '.ssc']
+
+	logging.info(f'Found {len(simfiles)} simfile directories:\n' + '\n'.join([str(p.parent) for p in simfiles]))
 
 	if args.dry_run:
 		return
 
-	args.output_dir.mkdir(parents=True)
+	# copy
+	try:
+		args.output_dir.mkdir(parents=True)
+	except FileExistsError:
+		logging.warning(f"Output directory '{args.output_dir}' already exists and will be overwritten")
 
-	# copy support files first
 	for f in files:
-		shutil.copy(f, args.output_dir / f.name)
+		dest = args.output_dir / (f.relative_to(args.input_dir))
+		if f.is_file():
+			shutil.copy(f, dest)
+		elif f.is_dir():
+			dest.mkdir(exist_ok = True)
 
-	# copy folders
-	simfile_dirs = []
-	for d in dirs:
-		d = d[0]
-		out_dir = args.output_dir / d.name
-		simfile_dirs.append(out_dir)
-		shutil.copytree(d, out_dir)
-
-	# transform folders
-	for d in simfile_dirs:
-		transform(d)
+	# transform
+	for d in simfiles:
+		transform(d.parent)
 
 	# clean up internal files
-	for d in simfile_dirs:
+	for d in simfiles:
 		cleanup(d)
 
 def main():
