@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
 	name='ssc-pkg',
-	version='0.2',
+	version='0.3',
 	
 	packages=find_packages(),
 	include_package_data=True,
@@ -10,11 +10,19 @@ setup(
 	zip_safe=False,
 	
 	# These are just based on what I have installed and are probably conservative
-	python_requires='~=3.7', # ~=3.6?
+	python_requires='~=3.7', # 3.8 once Ubuntu 20.04 is released
 	install_requires=[
 		'numpy~=1.18',
 		'pyyaml~=5.3',
 	],
+
+	extras_require={
+		'lint': [
+			'flake8',
+			'flake8-tabs',
+			'mypy',
+		],
+	},
 	
 	classifiers=[
 		'Development Status :: 1 - Planning',
