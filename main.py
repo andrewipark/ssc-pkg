@@ -33,13 +33,14 @@ def get_file_list(input_dir, filter_function=None, handler=None, ignore_handler=
 	"""Walk an input directory and return a processed listing of objects.
 
 	A partial replacement for os.walk on Path objects.
+	There is no followlinks equivalent,
+	so if a symbolic link points to a parent directory of itself,
+	infinite recursion will occur.
 
 	The functions must be as follows:
 	filter_function(curr)
 	handler(curr)
 	ignore_handler(curr, filter_function(path))
-
-	DANGER will infinite loop if directory structure is not a tree
 	"""
 
 	explore = deque([input_dir])
