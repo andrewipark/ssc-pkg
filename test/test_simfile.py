@@ -84,3 +84,12 @@ class TestNoteDataSimple(unittest.TestCase):
 	def test_clear_range_empty(self):
 		# FIXME
 		pass
+
+	def test_overlay(self):
+		pass
+
+	def test_mirror(self):
+		pass
+
+	def test_density(self):
+		pass

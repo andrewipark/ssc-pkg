@@ -1,12 +1,14 @@
 from fractions import Fraction
 from itertools import chain
-from typing import List, Iterable, Union
+from typing import List, Iterable, Union, Tuple
 
 import attr
 
 
 _NotePosition = Fraction
 _NoteType = str
+
+DensityInfo = Tuple[_NotePosition, int]
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
@@ -74,6 +76,18 @@ class NoteData:
 	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
 		'''Removes all the notes in the specified half-open range [start, stop).'''
 		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
+
+	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
+		'''Overlays another NoteData object onto this one.'''
+		raise NotImplementedError
+
+	def mirror(self, axes: List[str] = None) -> 'NoteData':
+		'''Applies the mirror transformation to the data.'''
+		raise NotImplementedError
+
+	def density(self) -> Iterable[DensityInfo]:
+		'''Return the density of the note pattern.'''
+		raise NotImplementedError
 
 
 def sm_to_notedata(data: str) -> NoteData:
