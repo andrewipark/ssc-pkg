@@ -2,7 +2,7 @@ import unittest
 from ssc_pkg import simfile
 from fractions import Fraction
 
-class TestNoteData(unittest.TestCase):
+class TestNoteDataSimple(unittest.TestCase):
 
 	def setUp(self):
 		self.the = simfile.sm_to_notedata(
@@ -22,12 +22,28 @@ class TestNoteData(unittest.TestCase):
 		self.assertRaises(IndexError, lambda: self.the[2])
 		self.assertRaises(IndexError, lambda: self.the[Fraction(21, 2)])
 		self.assertRaises(IndexError, lambda: self.the[69])
+		self.assertRaises(IndexError, lambda: self.the[Fraction(-2, 3)])
 
 		# never valid
-		self.assertRaises(IndexError, lambda: self.the[Fraction(-2, 3)])
 		self.assertRaises(IndexError, lambda: self.the[None])
 
 	def test_shift(self):
+		# reversible
 		self.assertEqual(self.the.shift(4).shift(-4), self.the)
 		self.assertEqual(self.the.shift(Fraction(13, 4)).shift(Fraction(-13, 4)), self.the)
+
 		self.assertEqual(self.the.shift(20)[24], '1000')
+		self.assertEqual(self.the.shift(Fraction(-3, 2))[Fraction(17, 2)], '0100')
+
+	def test_clear_range(self):
+		new_notedata = self.the.clear_range(5, 9)
+
+		self.assertFalse(2 in new_notedata)
+		self.assertTrue(4 in new_notedata)
+
+		self.assertFalse(5 in new_notedata)
+		self.assertFalse(6 in new_notedata)
+		self.assertFalse(Fraction(15, 2) in new_notedata)
+
+		self.assertTrue(9 in new_notedata)
+		self.assertTrue(10 in new_notedata)

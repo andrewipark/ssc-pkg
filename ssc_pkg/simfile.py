@@ -42,6 +42,13 @@ class NoteData:
 				return i
 		raise IndexError
 
+	def __contains__(self, position: _NotePosition) -> bool:
+		try:
+			self.__index_of_row(position)
+			return True
+		except IndexError:
+			return False
+
 	def __getitem__(self, key) -> _NoteType:
 		'''Returns the note at a given beat.'''
 		if isinstance(key, slice):
@@ -54,6 +61,9 @@ class NoteData:
 		'''Shifts all the notes by a given amount in time.'''
 		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
 
+	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
+		'''Removes all the notes in the specified half-open range [start, stop).'''
+		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
 
 def sm_to_notedata(data: str) -> NoteData:
 	# split out data
