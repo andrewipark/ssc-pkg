@@ -1,5 +1,8 @@
 language: python
 python:
   - '3.8'
-install: pip install -e .
-script: python3 main.py --help
+  # - 'nightly'
+install: pip install -e '.[lint]'
+script:
+  - python3 main.py --help # TODO replace with unittest
+  - mypy main.py
