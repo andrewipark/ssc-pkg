@@ -1,0 +1,10 @@
+[flake8]
+max-line-length = 115
+max-complexity = 10
+ignore =
+	# this project uses tabs
+	W191,
+	# spaces around longer keyword arguments improve legibility
+	E251,
+	# line break before binary operator is best practice
+	W503,

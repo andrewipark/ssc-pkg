@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+
 def args_path_sanity_check(args):
 	"""Do basic sanity checks for input and output directories"""
 	if not args.input_dir.exists():
@@ -16,7 +17,7 @@ def args_path_sanity_check(args):
 	input_dir_resolved = args.input_dir.resolve()
 	output_dir_resolved = args.output_dir.resolve()
 	if input_dir_resolved == output_dir_resolved:
-		raise ValueError(f"Input and output directories both resolve to '{input_dir_resolved}',"
+		raise ValueError(f"Input and output directories both resolve to '{input_dir_resolved}', "
 			'which would overwrite files')
 
 	err_parent, err_child = None, None
@@ -29,7 +30,13 @@ def args_path_sanity_check(args):
 		raise FileExistsError(f"{err_child.title()} directory is a child of the {err_parent} directory, "
 			"which could overwrite files")
 
-def get_file_list(input_dir, filter_function=None, handler=None, ignore_handler=None):
+
+def get_file_list(
+	input_dir,
+	filter_function = None,
+	handler = None,
+	ignore_handler = None
+):
 	"""Walk an input directory and return a processed listing of objects.
 
 	A partial replacement for os.walk on Path objects.
@@ -60,7 +67,8 @@ def get_file_list(input_dir, filter_function=None, handler=None, ignore_handler=
 			handler(curr)
 		yield curr
 
-def regex_path_name_match(regex=None):
+
+def regex_path_name_match(regex = None):
 	"""Return a function that:
 	Given a path, return regex matches.
 	"""
@@ -71,6 +79,7 @@ def regex_path_name_match(regex=None):
 	def filter_function(path):
 		return list(filter(None, [r.match(path.name) for r in regex]))
 	return filter_function
+
 
 def what_is_log_helper(path):
 	"""Log the basic type of an object"""
@@ -84,13 +93,15 @@ def what_is_log_helper(path):
 		is_a_message = f'something else statted as:\n{path.stat()}'
 	logging.log(log_level, f"'{path}' is {is_a_message}")
 
+
 def ignore_regex_log_helper(path, matches):
 	"""Output helpful information about regex matches"""
-	logging.debug(f"'{path}' ignored because of regexes: " \
+	logging.debug(f"'{path}' ignored because of regexes: "
 		+ ', '.join([
 			f"'{match.re.pattern}' matched '{match.group()}'"
 			for match in matches
 		]))
+
 
 def transform(out_dir):
 	"""TODO THIS SHOULD NOT BE HERE"""
@@ -109,7 +120,11 @@ def transform(out_dir):
 
 			# add ITG offset :(
 			offset_regex = r'OFFSET:(-?\d+?(?:\.\d+?)?);'
-			offset = float(re.search(offset_regex, ssc).group(1))
+			offset_match = re.search(offset_regex, ssc)
+			if offset_match:
+				offset = float(offset_match.group(1))
+			else:
+				offset = 0
 			offset += 0.009
 			ssc = re.sub(offset_regex, f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
 
@@ -129,12 +144,14 @@ def transform(out_dir):
 		logging.error(f'oggenc unavailable')
 	return True
 
+
 def run(args):
 	"""Top-level command to start the build process"""
 	args_path_sanity_check(args)
 
-	## explore
-	files = list(get_file_list(args.input_dir,
+	# explore
+	files = list(get_file_list(
+		args.input_dir,
 		filter_function = regex_path_name_match(args.ignore_regex),
 		handler = what_is_log_helper,
 		ignore_handler = ignore_regex_log_helper
@@ -165,6 +182,7 @@ def run(args):
 	for simfile in simfiles:
 		transform(simfile.parent)
 
+
 def main():
 	"""Initial command line entry point to set up logging and argument parsing"""
 	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
@@ -188,6 +206,7 @@ def main():
 	logging.debug(args)
 
 	run(args)
+
 
 if __name__ == "__main__":
 	main()
