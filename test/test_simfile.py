@@ -2,6 +2,7 @@ import unittest
 from ssc_pkg import simfile
 from fractions import Fraction
 
+
 class TestNoteDataSimple(unittest.TestCase):
 
 	def setUp(self):
@@ -10,6 +11,26 @@ class TestNoteDataSimple(unittest.TestCase):
 			'0000\n0000\n0000\n0000\n,\n1000\n0100\n0010\n0001\n,\n'
 			'0001\n0010\n0010\n1000\n0100\n0000\n0001\n0029\n'
 		)
+
+		self.long_jack_interval = Fraction(3, 4)
+		self.long_jack_length = 100
+		self.long_jack = simfile.NoteData([
+			simfile._NoteRow(self.long_jack_interval * i, '0101')
+			for i in range(self.long_jack_length)
+		])
+
+	def test_len(self):
+		self.assertEqual(len(self.the), 11)
+		self.assertEqual(len(self.long_jack), self.long_jack_length)
+
+	def test_contains(self):
+		self.assertFalse(0 in self.the)
+		self.assertFalse(2 in self.the)
+		self.assertTrue(4 in self.the)
+		self.assertTrue(Fraction(17, 2) in self.the)
+		self.assertFalse(Fraction(35, 4) in self.the)
+		self.assertTrue(self.long_jack_interval * 35 in self.long_jack)
+		self.assertFalse(self.long_jack_interval * Fraction(37, 12) in self.long_jack)
 
 	def test_getitem(self):
 		self.assertEqual(self.the[4], '1000')
