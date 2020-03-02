@@ -1,6 +1,6 @@
 from fractions import Fraction
 from itertools import chain
-from typing import List, Iterable
+from typing import List, Iterable, Union
 
 import attr
 
@@ -37,6 +37,7 @@ class NoteData:
 
 	def __index_of_row(self, position: _NotePosition) -> int:
 		'''Returns n s.t. _notes[n].position = position'''
+		# NOTE perf O(n)
 		for i, r in enumerate(self._notes):
 			if r.position == position:
 				return i
@@ -49,12 +50,21 @@ class NoteData:
 		except IndexError:
 			return False
 
-	def __getitem__(self, key) -> _NoteType:
+	def __getitem__(self, key: Union[_NotePosition, slice]) -> Union[_NoteType, 'NoteData']:
 		'''Returns the note at a given beat.'''
 		if isinstance(key, slice):
 			if key.step is not None:
 				raise IndexError('step with slices is not sensible')
-			raise NotImplementedError
+
+			# NOTE perf O(n), using bisection would still need O(n) array building
+			slice_start = 0
+			while slice_start < len(self._notes) and self._notes[slice_start].position < key.start:
+				slice_start += 1
+			slice_stop = slice_start
+			while slice_stop < len(self._notes) and self._notes[slice_stop].position < key.stop:
+				slice_stop += 1
+			return attr.evolve(self, notes = self._notes[slice_start:slice_stop])
+
 		return self._notes[self.__index_of_row(key)].notes
 
 	def shift(self, amount: _NotePosition) -> 'NoteData':
@@ -64,6 +74,7 @@ class NoteData:
 	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
 		'''Removes all the notes in the specified half-open range [start, stop).'''
 		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
+
 
 def sm_to_notedata(data: str) -> NoteData:
 	# split out data

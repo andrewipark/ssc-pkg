@@ -27,6 +27,18 @@ class TestNoteDataSimple(unittest.TestCase):
 		# never valid
 		self.assertRaises(IndexError, lambda: self.the[None])
 
+	def test_getitem_slicing(self):
+		self.assertEqual(len(self.the[0:0]), 0)
+		self.assertEqual(len(self.the[0:4]), 0)
+		self.assertEqual(len(self.the[4:4]), 0)
+
+		start, stop = 5, Fraction(19, 2)
+		new_notedata = self.the[start:stop]
+		self.assertEqual(len(new_notedata), 6)
+		self.assertEqual(self.the[8], '0001')
+		self.assertTrue(start in new_notedata)
+		self.assertFalse(stop in new_notedata)
+
 	def test_shift(self):
 		# reversible
 		self.assertEqual(self.the.shift(4).shift(-4), self.the)
@@ -47,3 +59,7 @@ class TestNoteDataSimple(unittest.TestCase):
 
 		self.assertTrue(9 in new_notedata)
 		self.assertTrue(10 in new_notedata)
+
+	def test_clear_range_empty(self):
+		# FIXME
+		pass
