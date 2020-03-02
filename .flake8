@@ -8,3 +8,5 @@ ignore =
 	E251,
 	# line break before binary operator is best practice
 	W503,
+	# personal stylistic choices re. continuation line indents
+	E121, E126, E128,
