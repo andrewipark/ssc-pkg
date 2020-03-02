@@ -1,6 +1,6 @@
 from fractions import Fraction
-from itertools import chain
-from typing import List, Iterable, Union, Tuple
+from itertools import chain, groupby
+from typing import List, Iterable, Union
 
 import attr
 
@@ -8,7 +8,11 @@ import attr
 _NotePosition = Fraction
 _NoteType = str
 
-DensityInfo = Tuple[_NotePosition, int]
+
+@attr.s(auto_attribs=True, frozen=True, slots=True)
+class DensityInfo:
+	delta: _NotePosition
+	count: int
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
@@ -85,9 +89,19 @@ class NoteData:
 		'''Applies the mirror transformation to the data.'''
 		raise NotImplementedError
 
+	def __delta_generator(self):
+		if len(self._notes) <= 1:
+			raise IndexError('invalid operation, chart has too few notes')
+		i = 1
+		while i < len(self._notes):
+			yield self._notes[i].position - self._notes[i - 1].position
+			i += 1
+
 	def density(self) -> Iterable[DensityInfo]:
 		'''Return the density of the note pattern.'''
-		raise NotImplementedError
+		if len(self._notes) == 1:
+			return []
+		return [DensityInfo(k, sum(1 for _ in g)) for k, g in groupby(self.__delta_generator())]
 
 
 def sm_to_notedata(data: str) -> NoteData:

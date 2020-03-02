@@ -92,4 +92,15 @@ class TestNoteDataSimple(unittest.TestCase):
 		pass
 
 	def test_density(self):
-		pass
+		self.assertEqual(
+			self.the.density(), [
+				simfile.DensityInfo(1, 4),
+				simfile.DensityInfo(Fraction(1, 2), 4),
+				simfile.DensityInfo(1, 1),
+				simfile.DensityInfo(Fraction(1, 2), 1),
+			]
+		)
+		self.assertEqual(
+			self.long_jack.density(),
+			[simfile.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
+		)
