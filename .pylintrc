@@ -1,0 +1,26 @@
+[MESSAGES CONTROL]
+
+disable=
+	bad-continuation, # I prefer single indent even if it looks uglier
+	C0326, # spaces around longer keyword arguments improve legibility
+	W1201 # stuffing complicated expressions into f-strings decreases legibility
+
+[BASIC]
+
+good-names=f,_
+
+[FORMAT]
+
+indent-string='\t'
+
+# based on 960px editor width
+max-line-length=115
+
+[MISCELLANEOUS]
+
+# based on Kate keywords
+notes=FIXME,TODO,XXX,WARNING,DANGER,CAUTION
+
+[LOGGING]
+
+logging-format-style=fstr
