@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import List, Iterable, Callable, Any
 
 
 def args_path_sanity_check(args):
@@ -32,11 +33,11 @@ def args_path_sanity_check(args):
 
 
 def get_file_list(
-	input_dir,
-	filter_function = None,
-	handler = None,
-	ignore_handler = None
-):
+	input_dir: Path,
+	filter_function: Callable[[Path], bool] = None,
+	handler: Callable[[Path], Any] = None,
+	ignore_handler: Callable[[Path, Any], Any] = None
+) -> Iterable[Path]:
 	"""Walk an input directory and return a processed listing of objects.
 
 	A partial replacement for os.walk on Path objects.
@@ -68,20 +69,18 @@ def get_file_list(
 		yield curr
 
 
-def regex_path_name_match(regex = None):
+def regex_path_name_match(regex: List[str]) -> Callable[[Path], bool]:
 	"""Return a function that:
 	Given a path, return regex matches.
 	"""
-	if regex is None:
-		regex = []
-	regex = [re.compile(r) for r in regex]
+	regex_compiled = [re.compile(r) for r in regex]
 
 	def filter_function(path):
-		return list(filter(None, [r.match(path.name) for r in regex]))
+		return list(filter(None, [r.match(path.name) for r in regex_compiled]))
 	return filter_function
 
 
-def what_is_log_helper(path):
+def what_is_log_helper(path: Path):
 	"""Log the basic type of an object"""
 	log_level = logging.DEBUG
 	if path.is_file():
@@ -94,7 +93,7 @@ def what_is_log_helper(path):
 	logging.log(log_level, f"'{path}' is {is_a_message}")
 
 
-def ignore_regex_log_helper(path, matches):
+def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
 	"""Output helpful information about regex matches"""
 	logging.debug(f"'{path}' ignored because of regexes: "
 		+ ', '.join([
@@ -103,7 +102,7 @@ def ignore_regex_log_helper(path, matches):
 		]))
 
 
-def transform(out_dir):
+def transform(out_dir: Path):
 	"""TODO THIS SHOULD NOT BE HERE"""
 	# TODO don't assume names, have this sent down from above code
 	# TODO use an actual library for this
