@@ -14,6 +14,7 @@ setup(
 	install_requires=[
 		'numpy~=1.18',
 		'pyyaml~=5.3',
+		'attr~=0.3.1',
 	],
 
 	extras_require={
