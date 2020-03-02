@@ -1,12 +1,12 @@
 import unittest
-from ssc_pkg import simfile
+from ssc_pkg import notedata
 from fractions import Fraction
 
 
 class TestNoteDataSimple(unittest.TestCase):
 
 	def setUp(self):
-		self.the = simfile.sm_to_notedata(
+		self.the = notedata.sm_to_notedata(
 			# empty measure 0, staircase measure 1
 			'0000\n0000\n0000\n0000\n,\n1000\n0100\n0010\n0001\n,\n'
 			'0001\n0010\n0010\n1000\n0100\n0000\n0001\n0029\n'
@@ -14,8 +14,8 @@ class TestNoteDataSimple(unittest.TestCase):
 
 		self.long_jack_interval = Fraction(3, 4)
 		self.long_jack_length = 100
-		self.long_jack = simfile.NoteData([
-			simfile._NoteRow(self.long_jack_interval * i, '0101')
+		self.long_jack = notedata.NoteData([
+			notedata._NoteRow(self.long_jack_interval * i, '0101')
 			for i in range(self.long_jack_length)
 		])
 
@@ -94,13 +94,13 @@ class TestNoteDataSimple(unittest.TestCase):
 	def test_density(self):
 		self.assertEqual(
 			self.the.density(), [
-				simfile.DensityInfo(1, 4),
-				simfile.DensityInfo(Fraction(1, 2), 4),
-				simfile.DensityInfo(1, 1),
-				simfile.DensityInfo(Fraction(1, 2), 1),
+				notedata.DensityInfo(1, 4),
+				notedata.DensityInfo(Fraction(1, 2), 4),
+				notedata.DensityInfo(1, 1),
+				notedata.DensityInfo(Fraction(1, 2), 1),
 			]
 		)
 		self.assertEqual(
 			self.long_jack.density(),
-			[simfile.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
+			[notedata.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
 		)
