@@ -1,6 +1,6 @@
 from fractions import Fraction
 from itertools import chain, groupby
-from typing import List, Iterable, Union
+from typing import List, Iterable, overload
 
 import attr
 
@@ -35,14 +35,14 @@ class NoteData:
 		pass
 
 	# All the notes stored by this object, in [beat: notes] form
-	_notes: List[_NoteRow] = attr.ib(default=None, converter=_normalize_notes, validator=__validate_notes)
+	_notes: List[_NoteRow] = attr.ib(factory=list, converter=_normalize_notes, validator=__validate_notes)
 
 	def __len__(self) -> int:
 		'''Return the number of note rows'''
 		return len(self._notes)
 
 	def __index_of_row(self, position: _NotePosition) -> int:
-		'''Returns n s.t. _notes[n].position = position'''
+		'''Return n s.t. _notes[n].position = position'''
 		# NOTE perf O(n)
 		for i, r in enumerate(self._notes):
 			if r.position == position:
@@ -56,8 +56,14 @@ class NoteData:
 		except IndexError:
 			return False
 
-	def __getitem__(self, key: Union[_NotePosition, slice]) -> Union[_NoteType, 'NoteData']:
-		'''Returns the note at a given beat.'''
+	@overload
+	def __getitem__(self, key: slice) -> 'NoteData':
+		'''Slice the notedata at the given boundaries, and return a contiguous subset'''
+	@overload
+	def __getitem__(self, key: _NotePosition) -> _NoteType:
+		'''Return the note at a given beat'''
+
+	def __getitem__(self, key):
 		if isinstance(key, slice):
 			if key.step is not None:
 				raise IndexError('step with slices is not sensible')
@@ -74,19 +80,19 @@ class NoteData:
 		return self._notes[self.__index_of_row(key)].notes
 
 	def shift(self, amount: _NotePosition) -> 'NoteData':
-		'''Shifts all the notes by a given amount in time.'''
+		'''Shift all the notes by a given amount in time'''
 		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
 
 	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
-		'''Removes all the notes in the specified half-open range [start, stop).'''
+		'''Removes all the notes in the specified half-open range [start, stop)'''
 		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
 
 	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
-		'''Overlays another NoteData object onto this one.'''
+		'''Overlay another NoteData object onto this one'''
 		raise NotImplementedError
 
 	def mirror(self, axes: List[str] = None) -> 'NoteData':
-		'''Applies the mirror transformation to the data.'''
+		'''Apply the mirror transformation to the note data'''
 		raise NotImplementedError
 
 	def __delta_generator(self):
@@ -98,7 +104,7 @@ class NoteData:
 			i += 1
 
 	def density(self) -> Iterable[DensityInfo]:
-		'''Return the density of the note pattern.'''
+		'''Return the density of the note data'''
 		if len(self._notes) == 1:
 			return []
 		return [DensityInfo(k, sum(1 for _ in g)) for k, g in groupby(self.__delta_generator())]
