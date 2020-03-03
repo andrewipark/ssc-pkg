@@ -1,6 +1,10 @@
 import logging
+from collections import OrderedDict as ordered_dict
 from enum import Enum, auto
-from typing import ClassVar, Iterable, Union
+from typing import (
+	Callable, ClassVar, Iterable, Type, TypeVar, Union
+)
+from warnings import warn
 
 import attr
 
@@ -120,3 +124,43 @@ def msd_to_lines(items: Iterable[MSDItem]) -> Iterable[str]:
 
 def msd_to_text(items: Iterable[MSDItem]) -> str: # convenience method
 	return ''.join(msd_to_lines(items))
+
+
+# type variable helpers
+T_object = TypeVar('T_object')
+T_value = TypeVar('T_value')
+
+
+# generic conversion functions
+
+def attrs_obj_to_msd(
+	attrs_obj,
+	name_converter: Callable[[str], str] = lambda name: name,
+	value_converter:
+		Callable[[str, Type[T_value], T_value], str]
+		= lambda name, value_type, value: str(value),
+	filterer:
+		Callable[[str, Type[T_value], T_value], bool]
+		= lambda name, value_type, value: value is not None,
+) -> Iterable[MSDItem]:
+	'''Convert an attrs object to MSD items
+
+	filterer: omits fields from MSD output if the return value is False
+
+	MSD is inherently a flat structure, so callers should only use this function on flat/POD objects.
+	'''
+	attr_field_data = attr.fields(type(attrs_obj))
+	obj_data = attr.asdict(attrs_obj, dict_factory=ordered_dict)
+	assert [a.name for a in attr_field_data] == list(obj_data.keys())
+
+	data = zip(obj_data.keys(), (a.type for a in attr_field_data), obj_data.values())
+
+	for name, val_type, value in data:
+		if val_type is None:
+			warn(
+				f'class {type(attrs_obj)} variable {name} has no type information,'
+				f'guessing {type(value)} from given value'
+			)
+			val_type = type(value)
+		if filterer(name, val_type, value):
+			yield MSDItem(name_converter(name), value_converter(name, val_type, value))
