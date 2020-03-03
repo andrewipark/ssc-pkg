@@ -1,8 +1,8 @@
 language: python
 python:
   - '3.8'
-  # - 'nightly'
+  # - 'nightly' # FIXME blocked by Ubuntu 20.04, note that builds take forever
 install: pip install -e '.[lint]'
 script:
-  - python3 ssc_pkg/main.py --help # TODO replace with unittest
-  - ./test.sh
+  - python3 ssc_pkg/main.py --help # TODO add unit tests for main.py
+  - ./rtest.sh
