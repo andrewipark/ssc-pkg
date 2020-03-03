@@ -10,3 +10,5 @@ ignore =
 	W503,
 	# personal stylistic choices re. continuation line indents
 	E121, E126, E128,
+	# there is no preference re. number of spaces before comments
+	E261,
