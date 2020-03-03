@@ -1,4 +1,5 @@
 import unittest
+from numbers import Number
 
 import attr
 
@@ -35,6 +36,8 @@ class TestMSD(unittest.TestCase):
 		]
 
 		self.simple = self.Simple(400, lower_alpha + '\n\n\n\n\n\n' + unicode_range, [2, 6, 5, 8, 68])
+
+		self.simple_msd = [MSDItem(k, str(v)) for k, v in attr.asdict(self.simple).items()]
 
 	def test_msd_item_str(self):
 		for i in self.msd_items:
@@ -132,3 +135,34 @@ class TestMSD(unittest.TestCase):
 			list(msd.attrs_obj_to_msd(self.simple, filterer = f.filterer)),
 			list(msd.attrs_obj_to_msd(self.simple))[::2],
 		)
+
+	@classmethod
+	def _simple_vc(_, tag, value_type, value):
+		if value_type is str:
+			return value
+		if issubclass(value_type, Number):
+			return value_type(value)
+		assert value_type is list
+		return [int(v.strip()) for v in value[1:-1].split(',')]
+
+	def test_msd_to_attrs_obj_tag_converter(self):
+		converted, excess = msd.msd_to_attrs_obj(self.simple_msd, self.Simple, value_converter = self._simple_vc)
+		self.assertEqual(converted, self.simple)
+		self.assertEqual(len(excess), 0)
+
+		# excess item insert
+		clobber = 'legible'
+		self.simple_msd.append(MSDItem('a_string', clobber))
+		converted, excess = msd.msd_to_attrs_obj(self.simple_msd, self.Simple, value_converter = self._simple_vc)
+		self.assertEqual(converted, attr.evolve(self.simple, a_string = clobber))
+
+	def test_msd_to_attrs_obj_value_converter(self):
+		self.simple_msd = [MSDItem(i.tag[::-1], i.value) for i in self.simple_msd]
+
+		converted, excess = msd.msd_to_attrs_obj(
+			self.simple_msd, self.Simple,
+			tag_converter = lambda x: x[::-1],
+			value_converter = self._simple_vc
+		)
+		self.assertEqual(converted, self.simple)
+		self.assertEqual(len(excess), 0)

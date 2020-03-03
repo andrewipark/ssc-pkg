@@ -1,9 +1,7 @@
 import logging
 from collections import OrderedDict as ordered_dict
 from enum import Enum, auto
-from typing import (
-	Callable, ClassVar, Iterable, Type, TypeVar, Union
-)
+from typing import Any, Callable, ClassVar, Collection, Iterable, Optional, Tuple, Type, TypeVar, Union
 from warnings import warn
 
 import attr
@@ -164,3 +162,45 @@ def attrs_obj_to_msd(
 			val_type = type(value)
 		if filterer(name, val_type, value):
 			yield MSDItem(name_converter(name), value_converter(name, val_type, value))
+
+
+def msd_to_attrs_obj(
+	items: Iterable[MSDItem],
+	attrs_class: Type[T_object],
+	tag_converter: Callable[[str], str] = lambda tag: tag,
+	value_converter:
+		Callable[[str, Type[T_value], str], Optional[T_value]]
+		= lambda tag, value_type, value_str: None # not as useful
+) -> Tuple[T_object, Collection[MSDItem]]:
+	'''Convert MSD data to an attrs object
+
+	If there are multiple MSD items that resolve to the same field,
+	the value used will be from the last MSD item,
+	but the duplicate items will not be returned.
+	'''
+	attr_field_data = attr.fields_dict(attrs_class)
+	assert attrs_class is not object, 'mypy'
+
+	unused_items = []
+	creation_dict = {}
+	for item in items:
+		tag, value = item.tag, item.value
+
+		name = tag_converter(tag)
+		if name not in attr_field_data:
+			unused_items.append(item)
+			continue
+
+		val_type = attr_field_data[name].type
+		if val_type is None:
+			warn(f'class {attrs_class} variable {name} has no type information')
+			val_type = Type[Any]
+
+		try:
+			creation_dict[name] = value_converter(tag, val_type, value)
+		except Exception as e:
+			print(f'conversion failed for class {attrs_class} variable {name}')
+			raise e
+
+	# NOTE blocked https://github.com/python/mypy/issues/5887
+	return attrs_class(**creation_dict), unused_items # type: ignore[call-arg] # noqa: F821
