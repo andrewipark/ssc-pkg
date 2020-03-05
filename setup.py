@@ -2,26 +2,27 @@ from setuptools import find_packages, setup
 
 setup(
 	name='ssc-pkg',
-	version='0.3',
+	version='0.5',
 	
 	packages=find_packages(),
 	include_package_data=True,
 	
 	zip_safe=False,
 	
-	# These are just based on what I have installed and are probably conservative
-	python_requires='~=3.7', # 3.8 once Ubuntu 20.04 is released
+	# these requirements are intentionally aggressive.
+	python_requires='~=3.8', # needed for type introspection and fast local copy
+
 	install_requires=[
-		'numpy~=1.18',
+		# 'numpy~=1.18',
 		'pyyaml~=5.3',
-		'attr~=0.3.1',
+		'attr>=0.3.1, <1',
 	],
 
 	extras_require={
 		'lint': [
-			'flake8',
-			'flake8-tabs',
-			'mypy',
+			'flake8~=3.7.9',
+			'flake8-tabs~=2.2.1',
+			'mypy~=0.761',
 		],
 	},
 	
