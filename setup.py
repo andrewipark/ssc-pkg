@@ -9,13 +9,12 @@ setup(
 	
 	zip_safe=False,
 	
-	# these requirements are intentionally aggressive.
 	python_requires='~=3.8', # needed for type introspection and fast local copy
 
 	install_requires=[
 		# 'numpy~=1.18',
 		'pyyaml~=5.3',
-		'attr>=0.3.1, <1',
+		'attrs~=19.3',
 	],
 
 	extras_require={
