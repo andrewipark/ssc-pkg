@@ -70,11 +70,16 @@ class NoteData:
 
 			# NOTE perf O(n), using bisection would still need O(n) array building
 			slice_start = 0
-			while slice_start < len(self._notes) and self._notes[slice_start].position < key.start:
-				slice_start += 1
+			if key.start is not None:
+				while slice_start < len(self._notes) and self._notes[slice_start].position < key.start:
+					slice_start += 1
 			slice_stop = slice_start
-			while slice_stop < len(self._notes) and self._notes[slice_stop].position < key.stop:
-				slice_stop += 1
+			if key.stop is not None:
+				while slice_stop < len(self._notes) and self._notes[slice_stop].position < key.stop:
+					slice_stop += 1
+			else:
+				slice_stop = len(self._notes)
+
 			return attr.evolve(self, notes = self._notes[slice_start:slice_stop])
 
 		return self._notes[self.__index_of_row(key)].notes

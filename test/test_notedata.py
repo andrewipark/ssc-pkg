@@ -49,10 +49,19 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertRaises(IndexError, lambda: self.the[None])
 
 	def test_getitem_slicing(self):
+		# easy empty cases
 		self.assertEqual(len(self.the[0:0]), 0)
 		self.assertEqual(len(self.the[0:4]), 0)
 		self.assertEqual(len(self.the[4:4]), 0)
+		self.assertEqual(len(self.the[20:]), 0)
+		self.assertEqual(len(self.the[:-1]), 0)
 
+		# non empty cases
+		self.assertEqual(self.the, self.the[:])
+		self.assertEqual(self.the[6:], self.the[6:12])
+		self.assertEqual(self.the[:8], self.the[2:8])
+
+		# standard
 		start, stop = 5, Fraction(19, 2)
 		new_notedata = self.the[start:stop]
 		self.assertEqual(len(new_notedata), 6)
