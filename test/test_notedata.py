@@ -46,7 +46,7 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertRaises(IndexError, lambda: self.the[Fraction(-2, 3)])
 
 		# never valid
-		self.assertRaises(IndexError, lambda: self.the[None])
+		self.assertRaises(TypeError, lambda: self.the[None])
 
 	def test_getitem_slicing(self):
 		# easy empty cases

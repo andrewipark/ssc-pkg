@@ -42,19 +42,25 @@ class NoteData:
 		return len(self._notes)
 
 	def __index_of_row(self, position: _NotePosition) -> int:
-		'''Return n s.t. _notes[n].position = position'''
-		# NOTE perf O(n)
-		for i, r in enumerate(self._notes):
-			if r.position == position:
-				return i
-		raise IndexError
+		'''Return n s.t. _notes[n].position = position, or insert location if absent'''
+		lo, hi = 0, len(self._notes)
+		while lo < hi:
+			c = (lo + hi) // 2
+			if self._notes[c].position < position:
+				lo = c + 1
+			else:
+				hi = c
+		return lo
+
+	def __index_of_row_must_exist(self, position: _NotePosition) -> int:
+		i = self.__index_of_row(position)
+		if self._notes[i].position != position:
+			raise IndexError
+		return i
 
 	def __contains__(self, position: _NotePosition) -> bool:
-		try:
-			self.__index_of_row(position)
-			return True
-		except IndexError:
-			return False
+		i = self.__index_of_row(position)
+		return (i < len(self._notes)) and (self._notes[i].position == position)
 
 	@overload
 	def __getitem__(self, key: slice) -> 'NoteData':
@@ -68,21 +74,19 @@ class NoteData:
 			if key.step is not None:
 				raise IndexError('step with slices is not sensible')
 
-			# NOTE perf O(n), using bisection would still need O(n) array building
-			slice_start = 0
-			if key.start is not None:
-				while slice_start < len(self._notes) and self._notes[slice_start].position < key.start:
-					slice_start += 1
-			slice_stop = slice_start
-			if key.stop is not None:
-				while slice_stop < len(self._notes) and self._notes[slice_stop].position < key.stop:
-					slice_stop += 1
+			if key.start is None:
+				slice_start = 0
 			else:
+				slice_start = self.__index_of_row(key.start)
+
+			if key.stop is None:
 				slice_stop = len(self._notes)
+			else:
+				slice_stop = self.__index_of_row(key.stop)
 
 			return attr.evolve(self, notes = self._notes[slice_start:slice_stop])
 
-		return self._notes[self.__index_of_row(key)].notes
+		return self._notes[self.__index_of_row_must_exist(key)].notes
 
 	def shift(self, amount: _NotePosition) -> 'NoteData':
 		'''Shift all the notes by a given amount in time'''
