@@ -1,12 +1,12 @@
 from fractions import Fraction
 from itertools import chain, groupby
-from typing import List, Iterable, overload
+from typing import List, Iterable, Sequence, overload
 
 import attr
 
 
 _NotePosition = Fraction
-_NoteType = str
+_NoteType = Sequence # SM: str
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
