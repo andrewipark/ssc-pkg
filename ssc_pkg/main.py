@@ -140,7 +140,7 @@ def transform(out_dir: Path):
 		logging.error(f"oggenc failed with return code {exc.returncode} and stderr\n{exc.stderr}")
 	except FileNotFoundError:
 		# FIXME this should really be moved elsewhere
-		logging.error(f'oggenc unavailable')
+		logging.error('oggenc unavailable')
 	return True
 
 

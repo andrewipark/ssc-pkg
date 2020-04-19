@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
 	name='ssc-pkg',
-	version='0.5',
+	version='0.6',
 	
 	packages=find_packages(),
 	include_package_data=True,
@@ -19,9 +19,14 @@ setup(
 
 	extras_require={
 		'lint': [
-			'flake8~=3.7.9',
+			'mypy~=0.770',
+			'flake8~=3.7.9', # PyCQA slow release schedule
 			'flake8-tabs~=2.2.1',
-			'mypy~=0.761',
+			# FIXME blocked https://github.com/PyCQA/pycodestyle/issues/911
+			'pycodestyle @ git+https://github.com/PyCQA/pycodestyle.git',
+			# FIXME blocked flake8 did not update its dependency properly
+			# flake8 incompatible error message is spurious
+			'pyflakes~=2.2',
 		],
 	},
 	
