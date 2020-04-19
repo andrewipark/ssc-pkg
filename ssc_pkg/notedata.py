@@ -123,7 +123,8 @@ class NoteData:
 
 	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
 		'''Removes all the notes in the specified half-open range [start, stop)'''
-		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
+		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
+		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
 
 	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
 		'''Overlay another NoteData object onto this one'''
