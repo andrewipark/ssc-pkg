@@ -111,10 +111,6 @@ class NoteData:
 		'''Overlay another NoteData object onto this one'''
 		raise NotImplementedError
 
-	def mirror(self, axes: List[str] = None) -> 'NoteData':
-		'''Apply the mirror transformation to the note data'''
-		raise NotImplementedError
-
 	def __delta_generator(self):
 		if len(self._notes) <= 1:
 			raise IndexError('invalid operation, chart has too few notes')

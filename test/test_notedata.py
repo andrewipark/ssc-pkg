@@ -116,9 +116,6 @@ class TestNoteDataSimple(unittest.TestCase):
 	def test_overlay(self):
 		pass
 
-	def test_mirror(self):
-		pass
-
 	def test_density(self):
 		self.assertEqual(
 			self.simple.density(), [
