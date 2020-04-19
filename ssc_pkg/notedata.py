@@ -28,11 +28,22 @@ def _normalize_notes(notes_list: Iterable[_NoteRow]) -> List[_NoteRow]:
 
 @attr.s(auto_attribs=True, frozen=True)
 class NoteData:
-	"""Class representing note data of a simfile."""
+	'''Class representing note data of a simfile. Data is stored by row.
+
+	This is intended as a container class and doesn't store nor handle
+	semantic data about what notes actually mean.
+	'''
 
 	def __validate_notes(self, _, notes_list: List[_NoteRow]):
-		# TODO: check note rows for duplicate values
-		pass
+		if len(note_row_lengths := set(len(r.notes) for r in notes_list)) > 1:
+			raise ValueError(
+				f'note rows have different lengths ({list(note_row_lengths)}) and are not homogenous'
+			)
+
+		for i in range(1, len(notes_list)):
+			prev, curr = notes_list[i - 1], notes_list[i]
+			if prev.position == curr.position:
+				raise ValueError(f'rows {i-1} and {i} have identical position {prev.position}')
 
 	# All the notes stored by this object, in [beat: notes] form
 	_notes: List[_NoteRow] = attr.ib(factory=list, converter=_normalize_notes, validator=__validate_notes)
@@ -72,7 +83,7 @@ class NoteData:
 	def __getitem__(self, key):
 		if isinstance(key, slice):
 			if key.step is not None:
-				raise IndexError('step with slices is not sensible')
+				raise IndexError('slice with step parameter not sensible')
 
 			if key.start is None:
 				slice_start = 0
