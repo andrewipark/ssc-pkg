@@ -1,7 +1,8 @@
 language: python
 python:
-  - '3.8'
-  # - 'nightly' # FIXME blocked by Ubuntu 20.04, note that builds take forever
+  - '3.8.2'
+  # - 'nightly' # test builds take a long time, best used before new Python releases
+dist: bionic # latest
 install: pip install -e '.[lint]'
 script:
   - python3 ssc_pkg/main.py --help # TODO add unit tests for main.py

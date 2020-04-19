@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
 	name='ssc-pkg',
-	version='0.6',
+	version='0.7',
 	
 	packages=find_packages(),
 	include_package_data=True,
