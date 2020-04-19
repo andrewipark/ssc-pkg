@@ -81,6 +81,20 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(self.simple[6:], self.simple[6:12])
 		self.assertEqual(self.simple[:8], self.simple[2:8])
 
+	def test_density(self):
+		self.assertEqual(
+			self.simple.density(), [
+				notedata.DensityInfo(1, 4),
+				notedata.DensityInfo(Fraction(1, 2), 4),
+				notedata.DensityInfo(1, 1),
+				notedata.DensityInfo(Fraction(1, 2), 1),
+			]
+		)
+		self.assertEqual(
+			self.long_jack.density(),
+			[notedata.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
+		)
+
 	def test_shift(self):
 		# data is shifted
 		self.assertEqual(self.simple.shift(20)[24], '1000')
@@ -115,17 +129,3 @@ class TestNoteDataSimple(unittest.TestCase):
 
 	def test_overlay(self):
 		pass
-
-	def test_density(self):
-		self.assertEqual(
-			self.simple.density(), [
-				notedata.DensityInfo(1, 4),
-				notedata.DensityInfo(Fraction(1, 2), 4),
-				notedata.DensityInfo(1, 1),
-				notedata.DensityInfo(Fraction(1, 2), 1),
-			]
-		)
-		self.assertEqual(
-			self.long_jack.density(),
-			[notedata.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
-		)

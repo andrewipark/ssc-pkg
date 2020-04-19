@@ -45,8 +45,10 @@ class NoteData:
 			if prev.position == curr.position:
 				raise ValueError(f'rows {i-1} and {i} have identical position {prev.position}')
 
-	# All the notes stored by this object, in [beat: notes] form
+	# all the notes stored by this object, in [beat: notes] form
 	_notes: List[_NoteRow] = attr.ib(factory=list, converter=_normalize_notes, validator=__validate_notes)
+
+	# access
 
 	def __len__(self) -> int:
 		'''Return the number of note rows'''
@@ -99,18 +101,6 @@ class NoteData:
 
 		return self._notes[self.__index_of_row_must_exist(key)].notes
 
-	def shift(self, amount: _NotePosition) -> 'NoteData':
-		'''Shift all the notes by a given amount in time'''
-		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
-
-	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
-		'''Removes all the notes in the specified half-open range [start, stop)'''
-		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
-
-	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
-		'''Overlay another NoteData object onto this one'''
-		raise NotImplementedError
-
 	def __delta_generator(self):
 		if len(self._notes) <= 1:
 			raise IndexError('invalid operation, chart has too few notes')
@@ -124,6 +114,20 @@ class NoteData:
 		if len(self._notes) == 1:
 			return []
 		return [DensityInfo(k, sum(1 for _ in g)) for k, g in groupby(self.__delta_generator())]
+
+	# mutation
+
+	def shift(self, amount: _NotePosition) -> 'NoteData':
+		'''Shift all the notes by a given amount in time'''
+		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
+
+	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
+		'''Removes all the notes in the specified half-open range [start, stop)'''
+		return attr.evolve(self, notes = [r for r in self._notes if not (start <= r.position < stop)])
+
+	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
+		'''Overlay another NoteData object onto this one'''
+		raise NotImplementedError
 
 
 def sm_to_notedata(data: str) -> NoteData:
