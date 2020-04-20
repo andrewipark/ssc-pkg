@@ -17,7 +17,7 @@ class DensityInfo:
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class _NoteRow:
-	position: _NotePosition
+	position: _NotePosition # = attr.ib(converter=Fraction) # causes slowdown
 	notes: _NoteType
 
 
