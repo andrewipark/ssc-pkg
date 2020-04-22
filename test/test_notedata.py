@@ -6,12 +6,29 @@ from fractions import Fraction
 class TestNoteDataSimple(unittest.TestCase):
 
 	def setUp(self):
-		self.simple = notedata.sm_to_notedata(
-			# empty measure 0, staircase measure 1
-			'0000\n0000\n0000\n0000\n,\n1000\n0100\n0010\n0001\n,\n'
-			'0001\n0010\n0010\n1000\n0100\n0000\n0001\n0029\n'
+		self.simple_notes = (
+			# measure 0: empty
+
+			# measure 1: 4th L>R facing-R staircase
+			[
+				notedata._NoteRow(Fraction(4 + p), n)
+				for p, n in enumerate(['1000', '0100', '0010', '0001'])
+			]
+			# measure 2: one note at the beginning
+			+ [notedata._NoteRow(Fraction(8), '0110')]
+			# measure 3: empty
+
+			# measure 4: some random 8ths
+			+ [
+				notedata._NoteRow(Fraction(p, 2) + 16, n)
+				for p, n in enumerate(['0001', '0010', '0010', '1000', '0100', '0000', '0001', '0029'])
+				if n != '0000'
+			]
+			# measure 5: 7ths (not in vanilla SM)
+			+ [notedata._NoteRow(Fraction(1, 7) + 20, '1111')]
 		)
-		self.simple_length = 11
+		self.simple = notedata.NoteData(self.simple_notes)
+		self.simple_beyond = 25
 
 		self.long_jack_interval = Fraction(3, 4)
 		self.long_jack_length = 100
@@ -29,21 +46,23 @@ class TestNoteDataSimple(unittest.TestCase):
 		))
 
 	def test_len(self):
-		self.assertEqual(len(self.simple), self.simple_length)
+		self.assertEqual(len(self.simple), len(self.simple_notes))
 		self.assertEqual(len(self.long_jack), self.long_jack_length)
 
 	def test_contains(self):
 		self.assertFalse(0 in self.simple)
 		self.assertFalse(2 in self.simple)
 		self.assertTrue(4 in self.simple)
-		self.assertTrue(Fraction(17, 2) in self.simple)
+		self.assertTrue(19 in self.simple)
+		self.assertTrue(Fraction(33, 2) in self.simple)
+		self.assertTrue(Fraction(141, 7) in self.simple)
 		self.assertFalse(Fraction(35, 4) in self.simple)
 		self.assertTrue(self.long_jack_interval * (self.long_jack_length * 17 // 37) in self.long_jack)
 		self.assertFalse(self.long_jack_interval * Fraction(37, 12) in self.long_jack)
 
 	def test_getitem(self):
 		self.assertEqual(self.simple[4], '1000')
-		self.assertEqual(self.simple[Fraction(23, 2)], '0029')
+		self.assertEqual(self.simple[Fraction(39, 2)], '0029')
 
 	def test_getitem_invalid(self):
 		# valid, but not in the container
@@ -65,29 +84,31 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(len(self.simple[0:0]), 0)
 		self.assertEqual(len(self.simple[0:4]), 0)
 		self.assertEqual(len(self.simple[4:4]), 0)
-		self.assertEqual(len(self.simple[20:]), 0)
+		self.assertEqual(len(self.simple[self.simple_beyond:]), 0)
 		self.assertEqual(len(self.simple[:-1]), 0)
 
 		# occupied standard slice
-		start, stop = 5, Fraction(19, 2)
+		start, stop = 6, Fraction(35, 2)
 		new_notedata = self.simple[start:stop]
 		self.assertEqual(len(new_notedata), 6)
-		self.assertEqual(self.simple[8], '0001')
+		self.assertEqual(self.simple[8], '0110')
 		self.assertTrue(start in new_notedata)
 		self.assertFalse(stop in new_notedata)
 
 		# occupied unbounded slices
 		self.assertEqual(self.simple, self.simple[:])
-		self.assertEqual(self.simple[6:], self.simple[6:12])
+		self.assertEqual(self.simple[18:], self.simple[18:self.simple_beyond])
 		self.assertEqual(self.simple[:8], self.simple[2:8])
 
 	def test_density(self):
 		self.assertEqual(
 			self.simple.density(), [
 				notedata.DensityInfo(1, 4),
+				notedata.DensityInfo(8, 1),
 				notedata.DensityInfo(Fraction(1, 2), 4),
 				notedata.DensityInfo(1, 1),
 				notedata.DensityInfo(Fraction(1, 2), 1),
+				notedata.DensityInfo(Fraction(9, 14), 1),
 			]
 		)
 		self.assertEqual(
@@ -98,39 +119,40 @@ class TestNoteDataSimple(unittest.TestCase):
 	def test_shift(self):
 		# data is shifted
 		self.assertEqual(self.simple.shift(20)[24], self.simple[4])
-		self.assertEqual(self.simple.shift(Fraction(-3, 2))[Fraction(17, 2)], self.simple[10])
+		self.assertEqual(self.simple.shift(Fraction(-3, 2))[Fraction(31, 2)], self.simple[17])
 
 		# reversible
 		self.assertEqual(self.simple.shift(4).shift(-4), self.simple)
 		self.assertEqual(self.simple.shift(Fraction(13, 4)).shift(Fraction(-13, 4)), self.simple)
 
 	def test_clear_range(self):
+		a, b = 6, 17
+
 		# individual contain tests
-		new_notedata = self.simple.clear_range(5, 9)
+		new_notedata = self.simple.clear_range(a, b)
 
 		self.assertFalse(2 in new_notedata)
 		self.assertTrue(4 in new_notedata)
 
-		self.assertFalse(5 in new_notedata)
 		self.assertFalse(6 in new_notedata)
-		self.assertFalse(Fraction(15, 2) in new_notedata)
+		self.assertFalse(7 in new_notedata)
+		self.assertFalse(Fraction(33, 2) in new_notedata)
 
-		self.assertTrue(9 in new_notedata)
-		self.assertTrue(10 in new_notedata)
+		self.assertTrue(17 in new_notedata)
+		self.assertTrue(18 in new_notedata)
 
 		# slice test
-		self.assertEqual(len(new_notedata[5:9]), 0)
+		self.assertEqual(len(new_notedata[a:b]), 0)
 
 		# idempotence
 		curr = new_notedata
 		for _ in range(3):
-			curr = curr.clear_range(5, 9)
+			curr = curr.clear_range(a, b)
 			self.assertEqual(curr, new_notedata)
 
 	def test_overlay(self):
-		shift_amount = 20
-		new_notedata = self.simple.overlay(self.long_jack.shift(shift_amount))
-		self.assertEqual(new_notedata[shift_amount:].shift(-shift_amount), self.long_jack)
+		new_notedata = self.simple.overlay(self.long_jack.shift(self.simple_beyond))
+		self.assertEqual(new_notedata[self.simple_beyond:].shift(-self.simple_beyond), self.long_jack)
 
 		doubled_jack = self.long_jack.overlay(self.long_jack.shift(self.long_jack_interval / 2))
 		self.assertEqual(len(doubled_jack), len(self.long_jack) * 2)
