@@ -43,7 +43,7 @@ class NoteData:
 		for i in range(1, len(notes_list)):
 			prev, curr = notes_list[i - 1], notes_list[i]
 			if prev.position == curr.position:
-				raise ValueError(f'rows {i-1} and {i} have identical position {prev.position}')
+				raise IndexError(f'rows {i-1} and {i} have identical position {prev.position}')
 
 	# all the notes stored by this object, in [beat: notes] form
 	_notes: List[_NoteRow] = attr.ib(factory=list, converter=_normalize_notes, validator=__validate_notes)

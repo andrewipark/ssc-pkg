@@ -24,7 +24,7 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertRaises(ValueError, lambda: notedata.sm_to_notedata(
 			'00a0\n003300'
 		))
-		self.assertRaises(ValueError, lambda: notedata.NoteData(
+		self.assertRaises(IndexError, lambda: notedata.NoteData(
 			notedata._NoteRow(0, '0030') for v in range(2)
 		))
 
