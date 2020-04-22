@@ -154,7 +154,7 @@ class NoteData:
 					rows.append(self._notes[i_s])
 				else: # elif mode == self.OverlayMode.KEEP_OTHER:
 					rows.append(other._notes[i_o])
-				# unlike merge sort we're not keeping both
+				# unlike merge sort, we only keep one of the elements in a tie
 				i_s += 1
 				i_o += 1
 
@@ -166,21 +166,19 @@ class NoteData:
 
 
 def sm_to_notedata(data: str) -> NoteData:
-	# split out data
 	measures: List[List[str]] = [m.strip().split() for m in data.split(',')]
 	measure_notes: List[List[_NoteRow]] = [
 		[
-			# measures in SM text are 4 beats regardless of TS data
-			_NoteRow((Fraction(measure_subindex, len(measure)) + measure_index) * 4, row)
-			for measure_subindex, row in enumerate(measure)
+			# measures in SM text are always 4 beats, regardless of time signature data elsewhere
+			_NoteRow((Fraction(row_index, len(measure)) + measure_index) * 4, row)
+			for row_index, row in enumerate(measure)
 			# filter out empty rows
-			if any([note != '0' for note in row])
+			if any(note != '0' for note in row)
 		]
 		for measure_index, measure in enumerate(measures)
 	]
-	# since we converted to beat numbers we don't care about measures anymore
-	return NoteData(list(chain(*measure_notes)))
+	return NoteData(chain(*measure_notes))
 
 
 def notedata_to_sm(data: NoteData) -> str:
-	raise NotImplementedError
+	pass
