@@ -15,10 +15,10 @@ class TestNoteDataSimple(unittest.TestCase):
 
 		self.long_jack_interval = Fraction(3, 4)
 		self.long_jack_length = 100
-		self.long_jack = notedata.NoteData([
+		self.long_jack = notedata.NoteData(
 			notedata._NoteRow(self.long_jack_interval * i, '0101')
 			for i in range(self.long_jack_length)
-		])
+		)
 
 	def test_validation(self):
 		self.assertRaises(ValueError, lambda: notedata.sm_to_notedata(
@@ -38,7 +38,7 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertTrue(4 in self.simple)
 		self.assertTrue(Fraction(17, 2) in self.simple)
 		self.assertFalse(Fraction(35, 4) in self.simple)
-		self.assertTrue(self.long_jack_interval * 35 in self.long_jack)
+		self.assertTrue(self.long_jack_interval * (self.long_jack_length * 17 // 37) in self.long_jack)
 		self.assertFalse(self.long_jack_interval * Fraction(37, 12) in self.long_jack)
 
 	def test_getitem(self):
@@ -97,8 +97,8 @@ class TestNoteDataSimple(unittest.TestCase):
 
 	def test_shift(self):
 		# data is shifted
-		self.assertEqual(self.simple.shift(20)[24], '1000')
-		self.assertEqual(self.simple.shift(Fraction(-3, 2))[Fraction(17, 2)], '0100')
+		self.assertEqual(self.simple.shift(20)[24], self.simple[4])
+		self.assertEqual(self.simple.shift(Fraction(-3, 2))[Fraction(17, 2)], self.simple[10])
 
 		# reversible
 		self.assertEqual(self.simple.shift(4).shift(-4), self.simple)
