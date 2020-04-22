@@ -9,6 +9,9 @@ import attr
 _NotePosition = Fraction
 _NoteType = Sequence # SM: str
 
+_SM_TEXT_BEATS_PER_MEASURE = 4 # regardless of time signature data elsewhere
+_SM_TEXT_MEASURE_SEP = ','
+
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class DensityInfo:
@@ -166,11 +169,10 @@ class NoteData:
 
 
 def sm_to_notedata(data: str) -> NoteData:
-	measures: List[List[str]] = [m.strip().split() for m in data.split(',')]
+	measures: List[List[str]] = [m.strip().split() for m in data.split(_SM_TEXT_MEASURE_SEP)]
 	measure_notes: List[List[_NoteRow]] = [
 		[
-			# measures in SM text are always 4 beats, regardless of time signature data elsewhere
-			_NoteRow((Fraction(row_index, len(measure)) + measure_index) * 4, row)
+			_NoteRow((Fraction(row_index, len(measure)) + measure_index) * _SM_TEXT_BEATS_PER_MEASURE, row)
 			for row_index, row in enumerate(measure)
 			# filter out empty rows
 			if any(note != '0' for note in row)

@@ -14,7 +14,7 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.simple_length = 11
 
 		self.long_jack_interval = Fraction(3, 4)
-		self.long_jack_length = 10000
+		self.long_jack_length = 100
 		self.long_jack = notedata.NoteData(
 			notedata._NoteRow(self.long_jack_interval * i, '0101')
 			for i in range(self.long_jack_length)
