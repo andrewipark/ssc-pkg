@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from fractions import Fraction
 from itertools import chain, groupby
 from typing import List, Iterable, Sequence, overload
@@ -126,9 +127,42 @@ class NoteData:
 		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
 		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
 
-	def overlay(self, other: 'NoteData', preserve_self: bool = False) -> 'NoteData':
+	class OverlayMode(Enum):
+		KEEP_SELF = auto()
+		KEEP_OTHER = auto()
+		RAISE = auto()
+
+	def overlay(self, other: 'NoteData', mode: OverlayMode = OverlayMode.RAISE) -> 'NoteData':
 		'''Overlay another NoteData object onto this one'''
-		raise NotImplementedError
+
+		if mode == self.OverlayMode.RAISE:
+			return attr.evolve(self, notes = chain(self._notes, other._notes))
+
+		# bastardized 'merge' of mergesort
+		rows = []
+		i_s, i_o = 0, 0
+		while i_s < len(self._notes) and i_o < len(other._notes):
+			# print(i_s, i_o)
+			if self._notes[i_s].position < other._notes[i_o].position:
+				rows.append(self._notes[i_s])
+				i_s += 1
+			elif other._notes[i_o].position < self._notes[i_s].position:
+				rows.append(other._notes[i_o])
+				i_o += 1
+			else:
+				if mode == self.OverlayMode.KEEP_SELF:
+					rows.append(self._notes[i_s])
+				else: # elif mode == self.OverlayMode.KEEP_OTHER:
+					rows.append(other._notes[i_o])
+				# unlike merge sort we're not keeping both
+				i_s += 1
+				i_o += 1
+
+		# sweep up remaining elements
+		rows.extend(self._notes[i_s:])
+		rows.extend(other._notes[i_o:])
+
+		return attr.evolve(self, notes = rows)
 
 
 def sm_to_notedata(data: str) -> NoteData:

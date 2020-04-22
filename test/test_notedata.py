@@ -128,4 +128,36 @@ class TestNoteDataSimple(unittest.TestCase):
 			self.assertEqual(curr, new_notedata)
 
 	def test_overlay(self):
-		pass
+		shift_amount = 20
+		new_notedata = self.simple.overlay(self.long_jack.shift(shift_amount))
+		self.assertEqual(new_notedata[shift_amount:].shift(-shift_amount), self.long_jack)
+
+		doubled_jack = self.long_jack.overlay(self.long_jack.shift(self.long_jack_interval / 2))
+		self.assertEqual(len(doubled_jack), len(self.long_jack) * 2)
+
+		# overlay is in opposition to slicing and clear range
+		a = self.long_jack_interval * self.long_jack_length / 3
+		b = a * 2
+		self.assertEqual(self.long_jack.clear_range(a, b).overlay(self.long_jack[a:b]), self.long_jack)
+
+	def test_overlay_modes(self):
+		OverlayMode = notedata.NoteData.OverlayMode
+
+		conflict_pos = self.long_jack_interval * self.long_jack_length * 3 / 2
+		row_one = notedata._NoteRow(conflict_pos, 'aaaa')
+		row_two = notedata._NoteRow(conflict_pos, 'bbbb')
+
+		jack_one = self.long_jack.overlay(notedata.NoteData([row_one]))
+		jack_two = (
+			self.long_jack.shift(self.long_jack_interval / 2)
+			.overlay(notedata.NoteData([row_two]))
+		)
+
+		self.assertRaises(IndexError, lambda: jack_one.overlay(jack_two, OverlayMode.RAISE))
+		jack_keep_self = jack_one.overlay(jack_two, OverlayMode.KEEP_SELF)
+		jack_keep_other = jack_one.overlay(jack_two, OverlayMode.KEEP_OTHER)
+
+		self.assertEqual(len(jack_keep_self), len(jack_keep_other))
+		self.assertEqual(jack_keep_self[:conflict_pos], jack_keep_other[:conflict_pos])
+		self.assertEqual(jack_keep_self[conflict_pos], row_one.notes)
+		self.assertEqual(jack_keep_other[conflict_pos], row_two.notes)
