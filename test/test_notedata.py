@@ -27,6 +27,16 @@ class TestNoteDataSimple(unittest.TestCase):
 			# measure 5: 7ths (not in vanilla SM)
 			+ [notedata._NoteRow(Fraction(1, 7) + 20, '1111')]
 		)
+		self.simple_text = (
+			'0000\n0000\n0000\n0000\n,\n'
+			'1000\n0100\n0010\n0001\n,\n'
+			'0110\n0000\n0000\n0000\n,\n'
+			'0000\n0000\n0000\n0000\n,\n'
+			'0001\n0010\n0010\n1000\n0100\n0000\n0001\n0029\n,\n'
+			# all of measure 5...
+			'0000\n1111\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n'
+			'0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n'
+		)
 		self.simple = notedata.NoteData(self.simple_notes)
 		self.simple_beyond = 25
 
@@ -183,3 +193,9 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(jack_keep_self[:conflict_pos], jack_keep_other[:conflict_pos])
 		self.assertEqual(jack_keep_self[conflict_pos], row_one.notes)
 		self.assertEqual(jack_keep_other[conflict_pos], row_two.notes)
+
+	def test_sm_to_notedata(self):
+		self.assertEqual(notedata.sm_to_notedata(self.simple_text), self.simple)
+
+	def test_notedata_to_sm(self):
+		self.assertEqual(notedata.notedata_to_sm(self.simple).strip(), self.simple_text.strip())

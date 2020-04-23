@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from fractions import Fraction
+from math import gcd
 from itertools import chain, groupby
 from typing import List, Iterable, Sequence, overload
 
@@ -182,5 +183,36 @@ def sm_to_notedata(data: str) -> NoteData:
 	return NoteData(chain(*measure_notes))
 
 
+# FIXME blocked py3.9 lcm
+def _lcm(it):
+	curr_lcm = 1
+	for i in it:
+		the_gcd = gcd(curr_lcm, i)
+		curr_lcm //= the_gcd
+		curr_lcm *= i
+	return curr_lcm
+
+
 def notedata_to_sm(data: NoteData) -> str:
-	pass
+	measures_text: List[str] = []
+	EMPTY_ROW = '0' * len(data._notes[0].notes)
+
+	# group notes by measure
+	for index, rs in groupby(data._notes, key=lambda r: r.position // _SM_TEXT_BEATS_PER_MEASURE):
+		rows = list(rs)
+
+		# fill in missing measures with empty data
+		for i in range(len(measures_text), index):
+			measures_text.append('\n'.join([EMPTY_ROW] * _SM_TEXT_BEATS_PER_MEASURE))
+
+		# set up text array
+		measure_rows_count = (_lcm(r.position.denominator for r in rows) * _SM_TEXT_BEATS_PER_MEASURE)
+		measure_rows = [EMPTY_ROW] * measure_rows_count
+
+		for r in rows:
+			dest_index = (r.position / _SM_TEXT_BEATS_PER_MEASURE % 1) * measure_rows_count
+			assert dest_index.denominator == 1, dest_index
+			measure_rows[dest_index.numerator] = r.notes
+		measures_text.append('\n'.join(measure_rows))
+
+	return ('\n' + _SM_TEXT_MEASURE_SEP + '\n').join(measures_text)
