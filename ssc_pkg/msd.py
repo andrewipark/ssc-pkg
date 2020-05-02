@@ -44,18 +44,17 @@ class _ParsingState(Enum):
 def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
 	'''Generate structured Python data from textual MSD.
 
-	NOTE The input lines must preserve the line endings,
-	and each string (except the last) must have only one line break, and only at the end of the string.
-	This is for convenience with file objects.
+	NOTE Iterable[str] is provided for convenience with file objects.
 
-	NOTE For simplicity, this parser is more restrictive on its input than SM `/src/MsdFile.cpp`.
-	All items must start at the beginning of lines,
-	and we do not attempt to rescue unclosed items.
-	(SM apparently rstrips them; this is too complex to replicate.)
-
-	TODO This parser doesn't currently support
-	* backslash escape: non-operational in AV, e.g. \\t does not turn into the tab character,
-	unconditional escape in SM. we'll need to add escape/unescape fn's to MSDItem.
+	NOTE This parser is stricter than SM `/src/MsdFile.cpp`
+	* All items must start at the beginning of lines.
+	* Unclosed items will cause undefined behavior.
+	(SM rstrips the text and soldiers on; this is too complex to replicate.)
+	* Backslash escapes are not supported.
+	Behavior seems to vary across products:
+		AV ignores the backslash
+		SM 3.9 doesn't support it at all
+		SM5 parses it to... something.
 	'''
 	if isinstance(lines, str):
 		lines = lines.splitlines(keepends = True)
@@ -65,7 +64,7 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
 	current_content: str = ''
 
 	for il, line in enumerate(lines):
-		il += 1 # text editor convention
+		il += 1 # standard text editor convention for error messages
 
 		# trim comments first, just as in SM.
 		comment_trim = line.find('//')
