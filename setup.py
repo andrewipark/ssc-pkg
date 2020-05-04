@@ -1,14 +1,14 @@
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
 	version='0.7',
-	
+
 	packages=find_packages(),
 	include_package_data=True,
-	
+
 	zip_safe=False,
-	
+
 	python_requires='~=3.8', # needed for type introspection and fast local copy
 
 	install_requires=[
@@ -29,7 +29,7 @@ setup(
 			'pyflakes~=2.2',
 		],
 	},
-	
+
 	classifiers=[
 		'Development Status :: 1 - Planning',
 		'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
