@@ -18,6 +18,7 @@ setup(
 	],
 
 	extras_require={
+		# lint: unit, type, code style testing
 		'lint': [
 			'mypy~=0.770',
 			'flake8~=3.7.9', # PyCQA slow release schedule
