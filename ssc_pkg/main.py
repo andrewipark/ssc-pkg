@@ -103,9 +103,7 @@ def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
 
 
 def transform(out_dir: Path):
-	"""TODO THIS SHOULD NOT BE HERE"""
-	# TODO don't assume names, have this sent down from above code
-	# TODO use an actual library for this
+	"""TODO rearchitect this entire piece of junk"""
 	for thing in out_dir.iterdir():
 		if thing.suffix == '.ssc':
 			with open(thing) as f:
@@ -131,7 +129,7 @@ def transform(out_dir: Path):
 				f.write(ssc)
 
 	# transcode ogg
-	# TODO don't assume names
+	# TODO don't assume names of files
 	try:
 		old_music = out_dir / "music.wav"
 		subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True, check=True)
@@ -139,7 +137,7 @@ def transform(out_dir: Path):
 	except subprocess.CalledProcessError as exc:
 		logging.error(f"oggenc failed with return code {exc.returncode} and stderr\n{exc.stderr}")
 	except FileNotFoundError:
-		# FIXME this should really be moved elsewhere
+		# TODO raise TransformException('oggenc unavailable')
 		logging.error('oggenc unavailable')
 	return True
 
@@ -155,7 +153,8 @@ def run(args):
 		handler = what_is_log_helper,
 		ignore_handler = ignore_regex_log_helper
 	))
-	# FIXME breaks horribly if multiple simfiles in same directory
+	# TODO check for multiple simfiles in same directory
+	# strategies: highest sort name, immediately raise
 	simfiles = [p for p in files if p.suffix == '.ssc']
 
 	logging.info(f'Found {len(simfiles)} simfile directories:\n'

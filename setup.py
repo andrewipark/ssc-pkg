@@ -23,10 +23,9 @@ setup(
 			'mypy~=0.770',
 			'flake8~=3.7.9', # PyCQA slow release schedule
 			'flake8-tabs~=2.2.1',
-			# FIXME blocked https://github.com/PyCQA/pycodestyle/issues/911
+			# NOTE blocked https://github.com/PyCQA/pycodestyle/issues/911
 			'pycodestyle @ git+https://github.com/PyCQA/pycodestyle.git',
-			# FIXME blocked flake8 did not update its dependency properly
-			# flake8 incompatible error message is spurious
+			# NOTE causes spurious flake8 incompatibility error on pip install
 			'pyflakes~=2.2',
 		],
 	},

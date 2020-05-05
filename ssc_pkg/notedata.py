@@ -26,7 +26,7 @@ class _NoteRow:
 	notes: _NoteType
 
 
-# FIXME blocked by https://github.com/python/mypy/issues/7912 should be internal @classmethod
+# NOTE blocked https://github.com/python/mypy/issues/7912 should be internal @classmethod
 def _normalize_notes(notes_list: Iterable[_NoteRow]) -> List[_NoteRow]:
 	return sorted(notes_list, key = lambda r: r.position)
 
@@ -183,7 +183,7 @@ def sm_to_notedata(data: str) -> NoteData:
 	return NoteData(chain(*measure_notes))
 
 
-# FIXME blocked py3.9 lcm
+# NOTE blocked py3.9 lcm
 def _lcm(it):
 	curr_lcm = 1
 	for i in it:

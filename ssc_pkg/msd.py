@@ -13,10 +13,10 @@ class MSDSyntaxError(ValueError):
 class MSDItem:
 	'''Immutable POD for an individual MSD item, representing a tag and a value.
 
-	NOTE the pythonic name would be 'key', but 'tag' is the name used on the StepMania wiki.
-	I also don't know where 'MSD' comes from.
-	'''
+	The meaning of MSD is lost to the sands of time.
 
+	NOTE 'key' ia more pythonic, but 'tag' is the canonical StepMania name per the wiki.
+	'''
 	def __validate_part(self, _, tag):
 		if self.END_TAG in tag:
 			raise MSDSyntaxError(f"A component '{tag}' contains end tag delimiter '{self.END_TAG}'")
