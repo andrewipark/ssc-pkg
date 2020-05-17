@@ -4,8 +4,9 @@ set -eux
 
 mypy .
 
-# name of python binary varies thanks to PEP 394 (also see https://lwn.net/Articles/780737/)
-# try 'python3' to be completely unambiguous on Unix systems, but windows cygwin only does 'python'.
+# `python3` is unambiguous on Unix systems (blame PEP 394)
+# but on Windows, Python 3 answers only to `python`
+# NOTE W10 users must disable `python3` -> Windows store alias in settings / apps and features
 if command -v python3 > /dev/null 2>&1; then
 	PYTHONEXEC=python3
 else
