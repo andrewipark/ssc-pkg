@@ -2,7 +2,7 @@ from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
-	version='0.7',
+	version='0.7.1',
 
 	packages=find_packages(),
 	include_package_data=True,
@@ -18,15 +18,10 @@ setup(
 	],
 
 	extras_require={
-		# lint: unit, type, code style testing
-		'lint': [
+		'lint': [ # unit, type, code style testing
 			'mypy~=0.770',
-			'flake8~=3.7.9', # PyCQA slow release schedule
+			'flake8~=3.8,>=3.8.1',
 			'flake8-tabs~=2.2.1',
-			# NOTE blocked https://github.com/PyCQA/pycodestyle/issues/911
-			'pycodestyle @ git+https://github.com/PyCQA/pycodestyle.git',
-			# NOTE causes spurious flake8 incompatibility error on pip install
-			'pyflakes~=2.2',
 		],
 	},
 

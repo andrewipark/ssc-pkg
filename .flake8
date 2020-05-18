@@ -12,8 +12,6 @@ ignore =
 	E121, E126, E128,
 	# there is no preference re. number of spaces before comments
 	E261,
-	# NOTE blocked https://github.com/PyCQA/pyflakes/pull/435#issuecomment-570738527
-	F811,
 exclude =
     .git,
     .mypy_cache,
