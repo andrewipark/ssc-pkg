@@ -169,6 +169,8 @@ def run(args):
 		elif path.is_dir():
 			dest.mkdir(exist_ok=True)
 
+	simfiles = [args.output_dir / (s.relative_to(args.input_dir)) for s in simfiles]
+
 	# transform
 	for simfile in simfiles:
 		transform(simfile.parent)
