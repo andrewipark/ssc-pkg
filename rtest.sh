@@ -15,4 +15,4 @@ fi
 
 $PYTHONEXEC -W error -m unittest discover
 
-flake8 --exit-zero
+flake8
