@@ -139,7 +139,7 @@ def run(args):
 	"""Top-level command to start the build process"""
 	args_path_sanity_check(args)
 
-	# explore
+	# list files
 	files = list(get_file_list(
 		args.input_dir,
 		filter_function = regex_path_name_match(args.ignore_regex),
@@ -153,7 +153,7 @@ def run(args):
 	logging.info(f'Found {len(simfiles)} simfile directories:\n'
 		+ '\n'.join([str(p.parent) for p in simfiles]))
 
-	if args.dry_run:
+	if args.list_only:
 		return
 
 	# copy
@@ -185,9 +185,9 @@ def main():
 		help='Output more details (stacks)')
 	parser.add_argument('-q', '--quiet', action='count', default=0,
 		help='Output less details (stacks)')
-	parser.add_argument('--dry-run', action='store_true',
-		help='List files and folders to be copied without doing anything else')
-	parser.add_argument("--ignore-regex", nargs='+', type=str, default=["^__", '.*\\.old$'],
+	parser.add_argument('--list-only', action='store_true',
+		help='List discovered simfile directories and stop')
+	parser.add_argument("--ignore-regex", nargs='+', type=str, default=["^__", r'.*\.old$'],
 		help="Objects matching any regex will not be considered (default: '%(default)s')")
 	args = parser.parse_args()
 
