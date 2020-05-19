@@ -6,7 +6,6 @@ import attr
 
 from . import notedata
 
-
 _TimingPosition = Decimal
 
 
