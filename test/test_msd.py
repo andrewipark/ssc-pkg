@@ -37,8 +37,7 @@ class TestMSD(unittest.TestCase):
 
 	def test_msd_items_to_lines(self):
 		for i in self.msd_items:
-			result = ''.join(msd.msd_items_to_lines([i]))
-			self.assertEqual(result, f'#{i.tag}:{i.value};\n')
+			self.assertEqual(str(i), f'#{i.tag}:{i.value};')
 
 	def test_lines_to_msd_items_cycle(self):
 		msd_items_a = list(msd.lines_to_msd_items(self.some_text))

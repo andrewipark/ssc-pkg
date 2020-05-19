@@ -9,6 +9,13 @@ class MSDSyntaxError(ValueError):
 	pass
 
 
+def _get_validate_part(component: str):
+	def __validate_part(self, attribute, val: str):
+		if component in val:
+			raise MSDSyntaxError(f"'{attribute.name}' contains invalid substring '{component}' in '{val}'")
+	return __validate_part
+
+
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class MSDItem:
 	'''Immutable POD for an individual MSD item, representing a tag and a value.
@@ -17,23 +24,17 @@ class MSDItem:
 
 	NOTE 'key' ia more pythonic, but 'tag' is the canonical StepMania name per the wiki.
 	'''
-	def __validate_part(self, _, tag):
-		if self.END_TAG in tag:
-			raise MSDSyntaxError(f"A component '{tag}' contains end tag delimiter '{self.END_TAG}'")
-		if self.END_VALUE in tag:
-			raise MSDSyntaxError(f"A component '{tag}' contains end value delimiter '{self.END_VALUE}'")
-
-	tag: str = attr.ib(validator=__validate_part)
-	value: str = attr.ib(validator=__validate_part)
-
 	# syntactical elements
 	BEGIN: ClassVar[str] = '#'
 	END_TAG: ClassVar[str] = ':'
 	END_VALUE: ClassVar[str] = ';'
 	COMMENT: ClassVar[str] = '//'
 
+	tag: str = attr.ib(validator=_get_validate_part(END_TAG))
+	value: str = attr.ib(validator=_get_validate_part(END_VALUE))
+
 	def __str__(self):
-		return f'{self.BEGIN}{self.tag}{self.END_TAG}{self.value}{self.END_VALUE}\n'
+		return f'{self.BEGIN}{self.tag}{self.END_TAG}{self.value}{self.END_VALUE}'
 
 
 class _ParsingState(Enum):
@@ -41,7 +42,7 @@ class _ParsingState(Enum):
 	TAG_DATA = auto()
 
 
-def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
+def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C901
 	'''Generate structured Python data from textual MSD.
 
 	NOTE Iterable[str] is provided for convenience with file objects.
@@ -55,6 +56,8 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
 		AV ignores the backslash
 		SM 3.9 doesn't support it at all
 		SM5 parses it to... something.
+
+	we should try regex or some such...
 	'''
 	if isinstance(lines, str):
 		lines = lines.splitlines(keepends = True)
@@ -72,6 +75,8 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
 			line = line[:-comment_trim]
 
 		if state is _ParsingState.NOTHING:
+			if not line.strip():
+				continue
 			if not line.startswith(MSDItem.BEGIN):
 				raise MSDSyntaxError(
 					f"Line {il}: expected '{MSDItem.BEGIN}' to start a new item, "
@@ -110,5 +115,4 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]:
 
 def msd_items_to_lines(items: Iterable[MSDItem]) -> Iterable[str]:
 	for item in items:
-		for line in (str(item)).splitlines(keepends=True):
-			yield line
+		yield str(item) + '\n'
