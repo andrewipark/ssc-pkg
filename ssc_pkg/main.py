@@ -99,6 +99,8 @@ def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
 
 
 def _run_copy(args, files):
+	logging.debug(f'copy: {len(files)} objects')
+
 	try:
 		args.output_dir.mkdir(parents=True)
 	except FileExistsError:
@@ -113,6 +115,8 @@ def _run_copy(args, files):
 
 
 def _run_transform(args, simfiles):
+	logging.debug(f'transform: {len(simfiles)} simfiles')
+
 	simfiles_generated = [(args.output_dir / (s.relative_to(args.input_dir)), s) for s in simfiles]
 	# t[1] is original
 
@@ -157,22 +161,24 @@ def run(args):
 
 	_run_transform(args, simfiles)
 
+	logging.info('finished')
+
 
 def main():
 	"""Initial command line entry point to set up logging and argument parsing"""
-	parser = argparse.ArgumentParser(description="Package simfiles for distribution.")
+	parser = argparse.ArgumentParser(description='Package simfiles for distribution.')
 	parser.add_argument("input_dir", type=Path)
 	parser.add_argument("output_dir", type=Path)
 	parser.add_argument('-v', '--verbose', action='count', default=0,
-		help='Output more details (stacks)')
+		help='output more detail (stacks)')
 	parser.add_argument('-q', '--quiet', action='count', default=0,
-		help='Output less details (stacks)')
+		help='output less detail (stacks)')
 	parser.add_argument('--list-only', action='store_true',
-		help='List discovered simfile directories and stop')
-	parser.add_argument("--ignore-regex", nargs='+', type=str, default=["^__", r'.*\.old$'],
-		help="Objects matching any regex will not be considered (default: '%(default)s')")
-	parser.add_argument('-t', '--transforms', nargs='*', type=str,
-		help='Transform(s) to run on the simfiles')
+		help='list discovered simfile directories and stop')
+	parser.add_argument('--ignore-regex', nargs='*', type=str, default=['^__', r'.*\.old$'],
+		help="object names that match a regex will not be considered (default: '%(default)s')")
+	parser.add_argument('-t', '--transforms', nargs='*', type=str, default=[],
+		help='transform(s) to run on the simfiles')
 	args = parser.parse_args()
 
 	# set up logging
