@@ -6,10 +6,10 @@ from typing import Optional
 from .simfile import Simfile
 
 
-class _logger():
+class _logger:
 	'''stub for transform logging'''
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
 		self.logger = logging.getLogger(f'transform.{type(self).__name__}')
 
 

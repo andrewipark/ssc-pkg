@@ -7,7 +7,7 @@ import re
 import shutil
 from collections import deque
 from pathlib import Path
-from typing import Any, Callable, Iterable, List
+from typing import Any, Callable, Iterable, List, Optional
 
 from . import transform_abc, transforms
 
@@ -37,9 +37,9 @@ def args_path_sanity_check(args):
 
 def get_file_list(
 	input_dir: Path,
-	filter_function: Callable[[Path], bool] = None,
-	handler: Callable[[Path], Any] = None,
-	ignore_handler: Callable[[Path, Any], Any] = None
+	filter_function: Optional[Callable[[Path], bool]] = None,
+	handler: Optional[Callable[[Path], Any]] = None,
+	ignore_handler: Optional[Callable[[Path, Any], Any]] = None
 ) -> Iterable[Path]:
 	"""Walk an input directory and return a processed listing of objects.
 

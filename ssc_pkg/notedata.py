@@ -1,14 +1,19 @@
 from enum import Enum, auto
 from fractions import Fraction
-from math import gcd
 from itertools import chain, groupby
-from typing import List, Iterable, Sequence, overload
+from math import gcd
+from typing import Iterable, List, Sequence, Union, overload
 
 import attr
 
-
 _NotePosition = Fraction
 _NoteType = Sequence # SM: str
+
+
+# NOTE blocked https://github.com/python/mypy/issues/3186
+# mypy doesn't work with numbers tower, so we have to write out types explicitly
+_NotePosSafe = Union[_NotePosition, int]
+
 
 _SM_TEXT_BEATS_PER_MEASURE = 4 # regardless of time signature data elsewhere
 _SM_TEXT_MEASURE_SEP = ','
@@ -22,7 +27,8 @@ class DensityInfo:
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class _NoteRow:
-	position: _NotePosition # = attr.ib(converter=Fraction) # causes slowdown
+	position: _NotePosition # = attr.ib(converter=Fraction)
+	# causes slowdown, and caller should know better anyways?
 	notes: _NoteType
 
 
@@ -59,7 +65,7 @@ class NoteData:
 		'''Return the number of note rows'''
 		return len(self._notes)
 
-	def __index_of_row(self, position: _NotePosition) -> int:
+	def __index_of_row(self, position: _NotePosSafe) -> int:
 		'''Return n s.t. _notes[n].position = position, or insert location if absent'''
 		lo, hi = 0, len(self._notes)
 		while lo < hi:
@@ -70,13 +76,13 @@ class NoteData:
 				hi = c
 		return lo
 
-	def __index_of_row_must_exist(self, position: _NotePosition) -> int:
+	def __index_of_row_must_exist(self, position: _NotePosSafe) -> int:
 		i = self.__index_of_row(position)
 		if self._notes[i].position != position:
 			raise IndexError
 		return i
 
-	def __contains__(self, position: _NotePosition) -> bool:
+	def __contains__(self, position: _NotePosSafe) -> bool:
 		i = self.__index_of_row(position)
 		return (i < len(self._notes)) and (self._notes[i].position == position)
 
@@ -84,7 +90,7 @@ class NoteData:
 	def __getitem__(self, key: slice) -> 'NoteData':
 		'''Slice the notedata at the given boundaries, and return a contiguous subset'''
 	@overload
-	def __getitem__(self, key: _NotePosition) -> _NoteType:
+	def __getitem__(self, key: _NotePosSafe) -> _NoteType:
 		'''Return the note at a given beat'''
 
 	def __getitem__(self, key):
@@ -122,11 +128,11 @@ class NoteData:
 
 	# mutation
 
-	def shift(self, amount: _NotePosition) -> 'NoteData':
+	def shift(self, amount: _NotePosSafe) -> 'NoteData':
 		'''Shift all the notes by a given amount in time'''
 		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
 
-	def clear_range(self, start: _NotePosition, stop: _NotePosition) -> 'NoteData':
+	def clear_range(self, start: _NotePosSafe, stop: _NotePosSafe) -> 'NoteData':
 		'''Removes all the notes in the specified half-open range [start, stop)'''
 		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
 		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))

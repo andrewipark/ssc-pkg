@@ -52,7 +52,7 @@ class TestNoteDataSimple(unittest.TestCase):
 			'00a0\n003300'
 		))
 		self.assertRaises(IndexError, lambda: notedata.NoteData(
-			notedata._NoteRow(0, '0030') for v in range(2)
+			notedata._NoteRow(Fraction(0), '0030') for v in range(2)
 		))
 
 	def test_len(self):
@@ -75,7 +75,6 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(self.simple[Fraction(39, 2)], '0029')
 
 	def test_getitem_invalid(self):
-		# valid, but not in the container
 		self.assertRaises(IndexError, lambda: self.simple[0])
 		self.assertRaises(IndexError, lambda: self.simple[1])
 		self.assertRaises(IndexError, lambda: self.simple[2])
@@ -83,29 +82,25 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertRaises(IndexError, lambda: self.simple[69])
 		self.assertRaises(IndexError, lambda: self.simple[Fraction(-2, 3)])
 
-		# never valid
-		self.assertRaises(TypeError, lambda: self.simple[None])
-		self.assertRaises(TypeError, lambda: self.simple[[2, 4, 8, 15]])
-		self.assertRaises(TypeError, lambda: self.simple[self.simple])
-		self.assertRaises(TypeError, lambda: self.simple['elmo'])
-
 	def test_getitem_slicing(self):
-		# empty slices
+		# empty ==
 		self.assertEqual(len(self.simple[0:0]), 0)
 		self.assertEqual(len(self.simple[0:4]), 0)
 		self.assertEqual(len(self.simple[4:4]), 0)
+
+		# empty unbounded
 		self.assertEqual(len(self.simple[self.simple_beyond:]), 0)
 		self.assertEqual(len(self.simple[:-1]), 0)
 
-		# occupied standard slice
+		# occupied
 		start, stop = 6, Fraction(35, 2)
-		new_notedata = self.simple[start:stop]
+		new_notedata = self.simple[start:stop] # type: ignore # mypy-slice
 		self.assertEqual(len(new_notedata), 6)
 		self.assertEqual(self.simple[8], '0110')
 		self.assertTrue(start in new_notedata)
 		self.assertFalse(stop in new_notedata)
 
-		# occupied unbounded slices
+		# occupied unbounded
 		self.assertEqual(self.simple, self.simple[:])
 		self.assertEqual(self.simple[18:], self.simple[18:self.simple_beyond])
 		self.assertEqual(self.simple[:8], self.simple[2:8])
@@ -113,10 +108,10 @@ class TestNoteDataSimple(unittest.TestCase):
 	def test_density(self):
 		self.assertEqual(
 			self.simple.density(), [
-				notedata.DensityInfo(1, 4),
-				notedata.DensityInfo(8, 1),
+				notedata.DensityInfo(Fraction(1), 4),
+				notedata.DensityInfo(Fraction(8), 1),
 				notedata.DensityInfo(Fraction(1, 2), 4),
-				notedata.DensityInfo(1, 1),
+				notedata.DensityInfo(Fraction(1), 1),
 				notedata.DensityInfo(Fraction(1, 2), 1),
 				notedata.DensityInfo(Fraction(9, 14), 1),
 			]
