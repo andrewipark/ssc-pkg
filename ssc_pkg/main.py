@@ -95,6 +95,20 @@ def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
 		]))
 
 
+def _run_copy(args, files):
+	try:
+		args.output_dir.mkdir(parents=True)
+	except FileExistsError:
+		logging.warning(f"Output directory '{args.output_dir}' already exists and will be overwritten")
+
+	for path in files:
+		dest = args.output_dir / (path.relative_to(args.input_dir))
+		if path.is_file():
+			shutil.copy(path, dest)
+		elif path.is_dir():
+			dest.mkdir(exist_ok=True)
+
+
 def transform(out_dir: Path):
 	"""TODO rearchitect this entire piece of junk"""
 	for thing in out_dir.iterdir():
@@ -156,18 +170,7 @@ def run(args):
 	if args.list_only:
 		return
 
-	# copy
-	try:
-		args.output_dir.mkdir(parents=True)
-	except FileExistsError:
-		logging.warning(f"Output directory '{args.output_dir}' already exists and will be overwritten")
-
-	for path in files:
-		dest = args.output_dir / (path.relative_to(args.input_dir))
-		if path.is_file():
-			shutil.copy(path, dest)
-		elif path.is_dir():
-			dest.mkdir(exist_ok=True)
+	_run_copy(args, files)
 
 	simfiles = [args.output_dir / (s.relative_to(args.input_dir)) for s in simfiles]
 
