@@ -2,7 +2,7 @@ from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
-	version='0.7.1',
+	version='0.7.2',
 
 	packages=find_packages(),
 	include_package_data=True,
@@ -31,4 +31,10 @@ setup(
 		'Programming Language :: Python :: 3',
 		'Operating System :: OS Independent',
 	],
+
+	entry_points={
+		'console_scripts': [
+			'ssc-pkg = ssc_pkg.main:main'
+		],
+	},
 )

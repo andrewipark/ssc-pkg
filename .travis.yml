@@ -5,5 +5,5 @@ python:
 dist: bionic # latest
 install: pip install -e '.[lint]'
 script:
-  - python3 ssc_pkg/main.py --help # TODO add unit tests for main.py
+  - ssc-pkg --help # TODO add unit tests for main.py
   - ./rtest.sh

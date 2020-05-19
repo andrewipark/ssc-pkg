@@ -2,14 +2,17 @@
 """Command-line runner for ssc-pkg"""
 
 import argparse
-from collections import deque
 import logging
 import re
 import shutil
-import subprocess
+from collections import deque
 from pathlib import Path
-from typing import List, Iterable, Callable, Any
+from typing import Any, Callable, Iterable, List
 
+from . import transform_abc, transforms
+
+
+# list file
 
 def args_path_sanity_check(args):
 	"""Do basic sanity checks for input and output directories"""
@@ -109,44 +112,26 @@ def _run_copy(args, files):
 			dest.mkdir(exist_ok=True)
 
 
-def transform(out_dir: Path):
-	"""TODO rearchitect this entire piece of junk"""
-	for thing in out_dir.iterdir():
-		if thing.suffix == '.ssc':
-			with open(thing) as f:
-				ssc = f.read()
+def _run_transform(args, simfiles):
+	simfiles_generated = [(args.output_dir / (s.relative_to(args.input_dir)), s) for s in simfiles]
+	# t[1] is original
 
-			# standardize music name
-			ssc = re.sub("MUSIC:music.wav", "MUSIC:music.ogg", ssc)
+	# transform
+	transform_objs = []
+	for i, t in enumerate(args.transforms):
+		try:
+			transform_objs.append(transforms.__dict__[t]())
+		except KeyError:
+			logging.error(f"transform '{t}' at index {i} does not exist")
 
-			# remove labels
-			ssc = re.sub("LABELS:.*?;", "LABELS:;", ssc, flags=(re.DOTALL | re.MULTILINE))
-
-			# add ITG offset :(
-			offset_regex = r'OFFSET:(-?\d+?(?:\.\d+?)?);'
-			offset_match = re.search(offset_regex, ssc)
-			if offset_match:
-				offset = float(offset_match.group(1))
+	for t, o in simfiles_generated:
+		for tr in transform_objs:
+			if isinstance(tr, transform_abc.SimfileTransform):
+				pass # TODO
+			elif isinstance(tr, transform_abc.FileTransform):
+				tr.transform(t, o)
 			else:
-				offset = 0
-			offset += 0.009
-			ssc = re.sub(offset_regex, f"OFFSET:{offset:.3f};", ssc, flags=(re.DOTALL | re.MULTILINE))
-
-			with open(thing, 'w') as f:
-				f.write(ssc)
-
-	# transcode ogg
-	# TODO don't assume names of files
-	try:
-		old_music = out_dir / "music.wav"
-		subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True, check=True)
-		old_music.unlink()
-	except subprocess.CalledProcessError as exc:
-		logging.error(f"oggenc failed with return code {exc.returncode} and stderr\n{exc.stderr}")
-	except FileNotFoundError:
-		# TODO raise TransformException('oggenc unavailable')
-		logging.error('oggenc unavailable')
-	return True
+				raise AssertionError('transform subclassing check failed')
 
 
 def run(args):
@@ -160,11 +145,9 @@ def run(args):
 		handler = what_is_log_helper,
 		ignore_handler = ignore_regex_log_helper
 	))
-	# TODO check for multiple simfiles in same directory
-	# strategies: highest sort name, immediately raise
-	simfiles = [p for p in files if p.suffix == '.ssc']
 
-	logging.info(f'Found {len(simfiles)} simfile directories:\n'
+	simfiles = [p for p in files if p.suffix == '.ssc']
+	logging.info(f'Found {len(simfiles)} simfiles:\n'
 		+ '\n'.join([str(p.parent) for p in simfiles]))
 
 	if args.list_only:
@@ -172,11 +155,7 @@ def run(args):
 
 	_run_copy(args, files)
 
-	simfiles = [args.output_dir / (s.relative_to(args.input_dir)) for s in simfiles]
-
-	# transform
-	for simfile in simfiles:
-		transform(simfile.parent)
+	_run_transform(args, simfiles)
 
 
 def main():
@@ -192,6 +171,8 @@ def main():
 		help='List discovered simfile directories and stop')
 	parser.add_argument("--ignore-regex", nargs='+', type=str, default=["^__", r'.*\.old$'],
 		help="Objects matching any regex will not be considered (default: '%(default)s')")
+	parser.add_argument('-t', '--transforms', nargs='*', type=str,
+		help='Transform(s) to run on the simfiles')
 	args = parser.parse_args()
 
 	# set up logging
@@ -202,7 +183,3 @@ def main():
 	logging.debug(args)
 
 	run(args)
-
-
-if __name__ == "__main__":
-	main()
