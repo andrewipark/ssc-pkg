@@ -42,8 +42,8 @@ class _ParsingState(Enum):
 	TAG_DATA = auto()
 
 
-def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C901
-	'''Generate structured Python data from textual MSD.
+def text_to_msd(text: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C901
+	'''Generate structured Python MSD objects from string MSD
 
 	NOTE Iterable[str] is provided for convenience with file objects.
 
@@ -59,14 +59,14 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]: #
 
 	we should try regex or some such...
 	'''
-	if isinstance(lines, str):
-		lines = lines.splitlines(keepends = True)
+	if isinstance(text, str):
+		text = text.splitlines(keepends = True)
 
 	state: _ParsingState = _ParsingState.NOTHING
 	tag_name: str
 	current_content: str = ''
 
-	for il, line in enumerate(lines):
+	for il, line in enumerate(text):
 		il += 1 # standard text editor convention for error messages
 
 		# trim comments first, just as in SM.
@@ -113,6 +113,10 @@ def lines_to_msd_items(lines: Union[str, Iterable[str]]) -> Iterable[MSDItem]: #
 		yield MSDItem(tag_name, current_content)
 
 
-def msd_items_to_lines(items: Iterable[MSDItem]) -> Iterable[str]:
+def msd_to_lines(items: Iterable[MSDItem]) -> Iterable[str]:
 	for item in items:
 		yield str(item) + '\n'
+
+
+def msd_to_text(items: Iterable[MSDItem]) -> str: # convenience method
+	return ''.join(msd_to_lines(items))

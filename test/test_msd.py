@@ -26,8 +26,12 @@ class TestMSD(unittest.TestCase):
 			MSDItem('anothertag', 'VALUE\nWITH\nembedded\n\n\n\n\n\n\nnnewlines')
 		]
 
-	def test_lines_to_msd_items(self):
-		msd_items = list(msd.lines_to_msd_items(self.some_text))
+	def test_msd_item_str(self):
+		for i in self.msd_items:
+			self.assertEqual(str(i), f'#{i.tag}:{i.value};')
+
+	def test_text_to_msd(self):
+		msd_items = list(msd.text_to_msd(self.some_text))
 		self.assertEqual(len(msd_items), 3)
 		self.assertEqual(msd_items[0].tag, 'SIMPLETAG')
 		self.assertEqual(msd_items[0].value, 'SIMPLEVALUE')
@@ -35,15 +39,11 @@ class TestMSD(unittest.TestCase):
 		self.assertEqual(msd_items[1].value, 'SHORTVALUE')
 		self.assertEqual(msd_items[2].value, '\n'.join(['VALUE', 'ON', 'FOUR', 'LINES']))
 
-	def test_msd_items_to_lines(self):
-		for i in self.msd_items:
-			self.assertEqual(str(i), f'#{i.tag}:{i.value};')
-
-	def test_lines_to_msd_items_cycle(self):
-		msd_items_a = list(msd.lines_to_msd_items(self.some_text))
-		text_a = ''.join(msd.msd_items_to_lines(msd_items_a))
+	def test_text_to_msd_cycle(self):
+		msd_items_a = list(msd.text_to_msd(self.some_text))
+		text_a = msd.msd_to_text(msd_items_a)
 		self.assertEqual(self.some_text, text_a)
-		msd_items_b = list(msd.lines_to_msd_items(text_a))
+		msd_items_b = list(msd.text_to_msd(text_a))
 		self.assertEqual(msd_items_a, msd_items_b)
-		text_b = ''.join(msd.msd_items_to_lines(msd_items_b))
+		text_b = msd.msd_to_text(msd_items_b)
 		self.assertEqual(text_a, text_b)
