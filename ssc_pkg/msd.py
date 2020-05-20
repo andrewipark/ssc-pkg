@@ -12,7 +12,7 @@ class MSDSyntaxError(ValueError):
 
 
 def _get_validate_part(component: str):
-	def __validate_part(self, attribute, val: str):
+	def __validate_part(_, attribute, val: str):
 		if component in val:
 			raise MSDSyntaxError(f"'{attribute.name}' contains invalid substring '{component}' in '{val}'")
 	return __validate_part
@@ -101,12 +101,11 @@ def text_to_msd(text: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C
 					f"Line {il}: after ending item value there should be no content'"
 					f"but got '{line_end[1]}' instead"
 				)
-			else:
-				current_content += line_end[0]
-				yield MSDItem(tag_name, current_content)
-				state = _ParsingState.NOTHING
-				current_content = ''
-				tag_name = ''
+			current_content += line_end[0]
+			yield MSDItem(tag_name, current_content)
+			state = _ParsingState.NOTHING
+			current_content = ''
+			tag_name = ''
 		else:
 			current_content += line
 

@@ -1,0 +1,37 @@
+[MESSAGES CONTROL]
+
+disable=
+	# inherited from .flake8
+	C0326, # spaces around keyword args
+	bad-continuation, # I prefer single indent even if it looks uglier
+
+	#========================
+	# pylint specific
+
+	# readability usually beats speed for logging, especially here
+	logging-fstring-interpolation,
+	logging-not-lazy,
+
+	C0103, # naming rules are too annoying to deal with
+	too-few-public-methods,
+	not-an-iterable, # mypy does a better job at checking this
+
+[BASIC]
+
+good-names=f,t,_
+
+[FORMAT]
+
+indent-string='\t'
+
+# based on 960px editor width
+max-line-length=115
+
+[MISCELLANEOUS]
+
+# based on Kate keywords
+notes=FIXME,TODO,XXX,WARNING,DANGER,CAUTION
+
+[LOGGING]
+
+

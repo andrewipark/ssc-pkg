@@ -19,7 +19,6 @@ class SimfileTransform(ABC, _logger):
 	@abstractmethod
 	def transform(self, target: Simfile) -> Simfile:
 		'''Run the transform on the given simfile'''
-		pass
 
 
 class FileTransform(ABC, _logger):
@@ -28,4 +27,3 @@ class FileTransform(ABC, _logger):
 	@abstractmethod
 	def transform(self, target: Path, original: Optional[Path]) -> None:
 		'''Run the transform on the given simfile paths'''
-		pass

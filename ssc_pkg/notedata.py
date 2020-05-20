@@ -208,7 +208,7 @@ def notedata_to_sm(data: NoteData) -> str:
 		rows = list(rs)
 
 		# fill in missing measures with empty data
-		for i in range(len(measures_text), index):
+		for _ in range(len(measures_text), index):
 			measures_text.append('\n'.join([EMPTY_ROW] * _SM_TEXT_BEATS_PER_MEASURE))
 
 		# set up text array

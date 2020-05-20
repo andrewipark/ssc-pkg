@@ -86,7 +86,7 @@ def regex_path_name_match(regex: List[str]) -> Callable[[Path], bool]:
 def what_is_log_helper(path: Path):
 	'''filter for non-file, non-directory objects, which shouldn't show up in normal usage'''
 	if not (path.is_file() or path.is_dir()):
-		logging.warn(f"'{path}' is an unexpected object statted as:\n{path.stat()}")
+		logging.warning(f"'{path}' is an unexpected object statted as:\n{path.stat()}")
 
 
 def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
