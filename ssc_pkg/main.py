@@ -151,7 +151,7 @@ def _run_transform(args, simfiles):
 		try:
 			transform_objs.append(transforms.__dict__[t]())
 		except KeyError:
-			logging.error(f"unknoqn transform '{t}' at index {i}")
+			logging.error(f"unknown transform '{t}' at index {i}")
 
 	for target, original in simfiles_generated:
 		for tobj in transform_objs:
@@ -177,7 +177,7 @@ def run(args):
 	# TODO add dupes check
 	simfiles = [p for p in files if p.suffix == '.ssc']
 	logging.info(f'Found {len(simfiles)} simfiles:\n'
-		+ '\n'.join([str(p.parent) for p in simfiles]))
+		+ '\n'.join(['\t' + str(p.parent) for p in simfiles]))
 
 	if args.list_only:
 		return
