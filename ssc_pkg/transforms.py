@@ -1,9 +1,13 @@
 import re
 import subprocess
+from math import floor
 from pathlib import Path
 from typing import Optional
 
+from attr import evolve
+
 from . import simfile
+from .notedata import NoteData, density_threshold
 from .transform import abc
 from .make import MakeTransform
 
@@ -164,6 +168,36 @@ class NeatOffset(abc.SimfileTransform):
 				self.logger.warning(
 					f"chart {_chart_str(chart)} offset {chart.timing_data.offset} is messy"
 				)
+
+
+def filter_notedata(notedata: NoteData) -> NoteData:
+	'''Filters out notes that are not useful'''
+	return evolve(
+		notedata,
+		notes = [
+			r for r in notedata._notes
+			# taps, hold heads, and roll heads are all that we care about
+			if ('1' in r.notes or '2' in r.notes or '4' in r.notes)
+		]
+	)
+
+
+class StreamBreakdown(abc.SimfileTransform):
+	'''TODO proof of concept'''
+
+	def transform(self, target: simfile.Simfile) -> None:
+		for chart in target.charts:
+			strs = []
+			for d in density_threshold(filter_notedata(chart.notes).density()):
+				if d > 0:
+					strs.append(f'{floor(d / 4)}')
+				else:
+					strs.append(f'({-floor(d / 4)})')
+
+			self.logger.info(
+				f"simfile '{target.title}' chart {_chart_str(chart)} "
+				f'density = {" ".join(strs)}'
+			)
 
 
 MakeTransform = MakeTransform
