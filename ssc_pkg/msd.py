@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict as ordered_dict
 from enum import Enum, auto
-from typing import Any, Callable, ClassVar, Collection, Iterable, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, ClassVar, Iterable, Optional, Sequence, Tuple, Type, TypeVar, Union
 from warnings import warn
 
 import attr
@@ -124,8 +124,8 @@ def msd_to_text(items: Iterable[MSDItem]) -> str: # convenience method
 
 
 # type variable helpers
-T_object = TypeVar('T_object')
-T_value = TypeVar('T_value')
+_T_obj = TypeVar('_T_obj')
+_T_val = TypeVar('_T_val')
 
 
 # generic conversion functions
@@ -134,10 +134,10 @@ def attrs_obj_to_msd(
 	attrs_obj,
 	name_converter: Callable[[str], str] = lambda name: name,
 	value_converter:
-		Callable[[str, Type[T_value], T_value], str]
+		Callable[[str, Type[_T_val], _T_val], str]
 		= lambda name, value_type, value: str(value),
 	filterer:
-		Callable[[str, Type[T_value], T_value], bool]
+		Callable[[str, Type[_T_val], _T_val], bool]
 		= lambda name, value_type, value: value is not None,
 ) -> Iterable[MSDItem]:
 	'''Convert an attrs object to MSD items
@@ -147,10 +147,10 @@ def attrs_obj_to_msd(
 	MSD is inherently a flat structure, so callers should only use this function on flat/POD objects.
 	'''
 	attr_field_data = attr.fields(type(attrs_obj))
-	obj_data = attr.asdict(attrs_obj, dict_factory=ordered_dict)
+	obj_data = attr.asdict(attrs_obj, dict_factory=ordered_dict, recurse=False)
 	assert [a.name for a in attr_field_data] == list(obj_data.keys())
 
-	data = zip(obj_data.keys(), (a.type for a in attr_field_data), obj_data.values())
+	data = list(zip(obj_data.keys(), (a.type for a in attr_field_data), obj_data.values()))
 
 	for name, val_type, value in data:
 		if val_type is None:
@@ -165,12 +165,12 @@ def attrs_obj_to_msd(
 
 def msd_to_attrs_obj(
 	items: Iterable[MSDItem],
-	attrs_class: Type[T_object],
+	attrs_class: Type[_T_obj],
 	tag_converter: Callable[[str], str] = lambda tag: tag,
 	value_converter:
-		Callable[[str, Type[T_value], str], Optional[T_value]]
+		Callable[[str, Type[_T_val], str], Optional[_T_val]]
 		= lambda tag, value_type, value_str: None # not as useful
-) -> Tuple[T_object, Collection[MSDItem]]:
+) -> Tuple[_T_obj, Sequence[MSDItem]]:
 	'''Convert MSD data to an attrs object
 
 	If there are multiple MSD items that resolve to the same field,
