@@ -7,18 +7,26 @@ from .simfile import Simfile
 
 
 class _logger:
-	'''stub for transform logging'''
+	'''mixin specially cased for logging'''
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
 		self.logger = logging.getLogger(f'transform.{type(self).__name__}')
 
 
 class SimfileTransform(ABC, _logger):
-	'''ABC for transforms that (only) need the data within the simfile'''
+	'''ABC for transforms that check simfile objects'''
 
 	@abstractmethod
-	def transform(self, target: Simfile) -> Simfile:
-		'''Run the transform on the given simfile'''
+	def transform(self, target: Simfile) -> Optional[Simfile]:
+		'''Transform the simfile, returning the resulting objects
+
+		Simfile is mutable, so object identity may still be the same
+		even though the values are different.
+		A None return value indicates specifically that the input value wasn't changed.
+
+		TODO zen this is probably a weird way to indicate ownership,
+		and the None thing is entirely based on trust. I'm open to suggestions.
+		'''
 
 
 class FileTransform(ABC, _logger):
@@ -26,4 +34,4 @@ class FileTransform(ABC, _logger):
 
 	@abstractmethod
 	def transform(self, target: Path, original: Optional[Path]) -> None:
-		'''Run the transform on the given simfile paths'''
+		'''Transform the simfile using the provided paths'''

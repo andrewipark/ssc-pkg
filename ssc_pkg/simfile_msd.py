@@ -325,7 +325,10 @@ def text_to_simfile(text: Union[str, Iterable[str]]) -> Simfile: # noqa: C901
 				continue
 
 	# get any leftovers
-	if state is _ParsingState.CHARTS_SSC:
+	if state is _ParsingState.BEGIN:
+		# TODO add unit test
+		return _msd_to_simfile_skel(curr_items)
+	elif state is _ParsingState.CHARTS_SSC:
 		simfile.charts.append(_msd_to_chart(curr_items))
 	return simfile
 
