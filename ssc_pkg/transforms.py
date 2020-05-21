@@ -60,7 +60,7 @@ As such, these are not really transforms so much as checkers.
 
 class Nothing(SimfileTransform):
 	def transform(self, target: simfile.Simfile) -> None:
-		self.logger.debug(f'nothing happened to {target}')
+		self.logger.debug(f"nothing happened to '{target.title}'")
 		return None
 
 
@@ -95,14 +95,14 @@ class NeatOffset(SimfileTransform):
 	def transform(self, target: simfile.Simfile) -> None:
 		if target.timing_data.offset % 1 != 0:
 			self.logger.warning(
-				f"simfile '{target}' offset {target.timing_data.offset} is messy"
+				f"simfile '{target.title}' offset {target.timing_data.offset} is messy"
 			)
 		for c in target.charts:
 			if not c.timing_data:
 				continue
 			if c.timing_data.offset % 1 != 0:
 				self.logger.warning(
-					f"simfile '{target}' "
+					f"simfile '{target.title}' "
 					f"chart {c.game_type} {c.difficulty} {c.meter} '{c.description or c.credit} "
 					f'offset {target.timing_data.offset} is messy'
 				)
