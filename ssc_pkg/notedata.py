@@ -32,6 +32,8 @@ _SM_TEXT_BEATS_PER_MEASURE = 4 # regardless of time signature data elsewhere
 _SM_TEXT_MEASURE_SEP = ','
 
 
+# density helpers
+
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class DensityInfo:
 	delta: Position
@@ -39,6 +41,23 @@ class DensityInfo:
 	count: int
 	'''The number of consecutive instances where the time between two notes is :attr:`delta`'''
 
+
+def density_threshold(
+	data: Iterable[DensityInfo],
+	delta_threshold: Position = Fraction(1, 4),
+	count_threshold: int = 14, # 7/8 of a measure, or 1-note gap in 16th stream
+) -> Iterable[Position]:
+	'''consume density information, and yield the lengths above or below (<=) the threshold'''
+	return [
+		(sum((d.delta * d.count for d in g), Fraction(0)) * (1 if is_stream else -1))
+		for is_stream, g in groupby(
+			data,
+			key = lambda d: (d.delta <= delta_threshold) and (d.count >= count_threshold)
+		)
+	]
+
+
+# actual NoteData stuff
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class _NoteRow(Generic[NoteType]):

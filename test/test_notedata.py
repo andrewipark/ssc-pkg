@@ -2,6 +2,42 @@ import unittest
 from fractions import Fraction
 
 from ssc_pkg import notedata
+from ssc_pkg.notedata import DensityInfo as DI
+
+
+def _block(beats = None, measures = None, interval = Fraction(1, 4)) -> DI:
+	if beats is None:
+		if measures is None:
+			raise ValueError
+		beats = measures * notedata._SM_TEXT_BEATS_PER_MEASURE
+	return DI(interval, int(beats / interval))
+
+
+def _rest(beats = None, measures = None) -> DI:
+	if beats is None:
+		if measures is None:
+			raise ValueError
+		beats = measures * notedata._SM_TEXT_BEATS_PER_MEASURE
+	return DI(Fraction(beats), 1)
+
+
+class TestDensityHelpers(unittest.TestCase):
+
+	def setUp(self):
+		pass
+
+	def test_density_threshold(self):
+		self.assertEqual(list(notedata.density_threshold([])), [])
+
+		# obvious cases
+		for i in [5, 7, 11, 13, 20, 64, 512, 4294967296]:
+			self.assertEqual(list(notedata.density_threshold([_block(i)])), [i])
+
+	def test_density_threshold_delta(self):
+		pass # TODO
+
+	def test_density_threshold_count(self):
+		pass # TODO
 
 
 OverlayMode = notedata.NoteData.OverlayMode
