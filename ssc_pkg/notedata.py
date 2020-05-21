@@ -6,6 +6,7 @@ from typing import Iterable, List, Sequence, Union, overload
 
 import attr
 
+
 _NotePosition = Fraction
 _NoteType = Sequence # SM: str
 

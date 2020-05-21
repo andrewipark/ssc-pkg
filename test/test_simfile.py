@@ -1,5 +1,4 @@
 import unittest
-
 from pathlib import Path
 
 from ssc_pkg import simfile

@@ -1,6 +1,7 @@
 from timeit import Timer
 from typing import List, Tuple
 
+
 setup = '''
 from ssc_pkg import notedata
 ssc = '0001\\n0001\\n0001\\n0002\\n,\\n' * 10000 + '0001\\n0001\\n0001\\n0002'

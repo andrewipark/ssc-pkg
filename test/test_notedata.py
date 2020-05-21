@@ -1,6 +1,7 @@
 import unittest
-from ssc_pkg import notedata
 from fractions import Fraction
+
+from ssc_pkg import notedata
 
 
 class TestNoteDataSimple(unittest.TestCase):
