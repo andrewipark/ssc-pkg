@@ -1,0 +1,21 @@
+[run]
+branch = True
+command_line = -m unittest discover
+
+omit =
+	# lines separate, not commas
+	# folders require wildcards
+
+	# flake8 inherited
+	.git/*
+	.mypy_cache/*
+	venv/*
+	*.egg-info/*
+
+	setup.py
+
+source = .
+
+[report]
+show_missing = True
+skip_covered = True
