@@ -4,7 +4,7 @@ from typing import List, Mapping, Optional, Tuple
 
 import attr
 
-from . import notedata
+from ssc_pkg import notedata
 
 
 _TimingPosition = Decimal # somewhat tied to SM

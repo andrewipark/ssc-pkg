@@ -6,8 +6,8 @@ from typing import (
 	Callable, Iterable, List, Mapping, Optional, Tuple, Type, TypeVar, Union, cast, get_args, get_origin
 )
 
-from . import msd, notedata
-from .simfile_ds import Chart, Simfile, TimingData
+from ssc_pkg import msd, notedata
+from .structs import Chart, Simfile, TimingData
 
 
 # data for MSD conversions
