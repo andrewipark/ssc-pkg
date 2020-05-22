@@ -1,20 +1,27 @@
 [MESSAGES CONTROL]
 
 disable=
+	##########################
 	# inherited from .flake8
 	C0326, # spaces around keyword args
 	bad-continuation, # I prefer single indent even if it looks uglier
 
-	#========================
+	###################
 	# pylint specific
 
 	# readability usually beats speed for logging, especially here
 	logging-fstring-interpolation,
 	logging-not-lazy,
 
-	C0103, # naming rules are too annoying to deal with
+	# too annoying or nonsensical
+	C0103, # naming rules
 	too-few-public-methods,
-	not-an-iterable, # mypy does a better job at checking this
+
+	###################
+	# handled by mypy
+
+	no-member,
+	not-an-iterable,
 
 [BASIC]
 

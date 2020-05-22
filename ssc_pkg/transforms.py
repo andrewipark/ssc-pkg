@@ -2,17 +2,16 @@ import re
 import subprocess
 from pathlib import Path
 
-from . import simfile
-from .transform_abc import FileTransform, SimfileTransform
+from . import simfile, transform_abc
 
 
-class OggConvert(FileTransform):
+class OggConvert(transform_abc.FileTransform):
 	'''Convert the audio to Ogg Vorbis, the optimal format for Stepmania'''
 
 	def transform(self, target: Path):
 		# load
 		with open(target, encoding='utf-8') as f:
-				sf = simfile.text_to_simfile(f)
+			sf = simfile.text_to_simfile(f)
 
 		# tons of preconditions
 		if not sf.music:
@@ -50,21 +49,20 @@ class OggConvert(FileTransform):
 		old_music.unlink()
 
 
-'''Check transforms
+####################
+# Check transforms
+#
+# These transforms verify properties of the given simfile or file,
+# and must not modify either.
+# They are not really transforms so much as checkers.
 
-These transforms verify properties of the given simfile or file,
-and must not modify either.
-As such, these are not really transforms so much as checkers.
-'''
 
-
-class Nothing(SimfileTransform):
+class Nothing(transform_abc.SimfileTransform):
 	def transform(self, target: simfile.Simfile) -> None:
 		self.logger.debug(f"nothing happened to '{target.title}'")
-		return None
 
 
-class NameRegex(FileTransform):
+class NameRegex(transform_abc.FileTransform):
 	'''Check that filenames exactly match given regex.'''
 
 	def transform(self, target: Path):
@@ -86,7 +84,7 @@ class NameRegex(FileTransform):
 				)
 
 
-class NeatOffset(SimfileTransform):
+class NeatOffset(transform_abc.SimfileTransform):
 	'''Check that the offset value is an exact multiple of one second
 
 	This makes it easy to tell at a glance whether the ITG offset was applied or not,

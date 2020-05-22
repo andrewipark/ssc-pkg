@@ -12,7 +12,7 @@ from .simfile_ds import Chart, Simfile, TimingData
 
 # data for MSD conversions
 
-def _SM_msd_tables():
+def _SM_msd_tables() -> Tuple[Mapping[str, str], Mapping[str, str]]:
 	table = [
 		# TimingData
 		('bpm', 'BPMS'),
@@ -47,12 +47,15 @@ def _SM_msd_tables():
 	for i in allcaps_easy:
 		table.append((i, i.upper().replace('_', '')))
 
-	return {tag: field for field, tag in table}, {field: tag for field, tag in table}
+	return (
+		dict(table),
+		{tag: field for field, tag in table}
+	)
 
 
 _SM_tables = _SM_msd_tables()
-_SM_msd_to_items: Mapping[str, str] = _SM_tables[0]
-_SM_items_to_msd: Mapping[str, str] = _SM_tables[1]
+_SM_items_to_msd: Mapping[str, str] = _SM_tables[0]
+_SM_msd_to_items: Mapping[str, str] = _SM_tables[1]
 
 
 def _SM_name_converter(name: str) -> str:
@@ -118,7 +121,7 @@ def _msd_to_timing_data_vcv(tag: str, value_type, value: str):
 			for v in value.strip().split(',')
 		]
 		return _msd_td_mapping(tag, key_type, val_type, data)
-	elif value_type is str or value_type is Decimal:
+	if value_type is str or value_type is Decimal:
 		return value_type(value)
 
 	raise TypeError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
@@ -142,6 +145,7 @@ def _timing_data_to_msd_vcv(name: str, value_type: Type[_T_val], value: _T_val) 
 
 	if isinstance(value, MappingABC):
 		return ',\n'.join(f'{k}={v}' for k, v in value.items())
+
 	return str(value)
 
 
@@ -164,7 +168,7 @@ def _msd_to_chart_vcv(tag: str, value_type, value: str):
 
 	if issubclass(value_type, notedata.NoteData):
 		return notedata.sm_to_notedata(value)
-	elif value_type is int or value_type is str:
+	if value_type is int or value_type is str:
 		return value_type(value)
 
 	raise TypeError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
@@ -326,14 +330,16 @@ def text_to_simfile(text: Union[str, Iterable[str]]) -> Simfile: # noqa: C901
 
 	# get any leftovers
 	if state is _ParsingState.BEGIN:
-		# TODO add unit test
+		# TODO add unit test for header-only simfile
 		return _msd_to_simfile_skel(curr_items)
-	elif state is _ParsingState.CHARTS_SSC:
+
+	if state is _ParsingState.CHARTS_SSC:
 		simfile.charts.append(_msd_to_chart(curr_items))
+
 	return simfile
 
 
-SM_INDENT = '     ' # origin unknown?
+SM_INDENT = '     ' # why is the convention this particular string?
 
 
 def _chart_header(_: Chart) -> str:
