@@ -5,6 +5,7 @@ from typing import Optional
 
 from . import simfile
 from .transform import abc
+from .make import MakeTransform
 
 
 def _chart_str(chart: simfile.Chart) -> str:
@@ -150,3 +151,6 @@ class NeatOffset(abc.SimfileTransform):
 				self.logger.warning(
 					f"chart {_chart_str(chart)} offset {chart.timing_data.offset} is messy"
 				)
+
+
+MakeTransform = MakeTransform
