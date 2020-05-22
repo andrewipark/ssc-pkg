@@ -3,7 +3,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
+from typing import ClassVar, Iterable, Optional, Tuple
 
 from ssc_pkg.simfile import Simfile
 
@@ -58,4 +58,31 @@ class FileTransform(ABC, _Logger):
 		WARNING A None return can also mean that the simfile changed on disk,
 		but the simfile object did not.
 		Implementations MUST note if this behavior is possible.
+		'''
+
+
+class MetaTransform(ABC, _Logger):
+	'''ABC for transforms that use both the filesystem and arbitrary config data
+	as well as arbitrary configuration data
+	'''
+
+	DEFAULT_METADATA: ClassVar[str] = '__metadata.yaml'
+
+	def data_path(self) -> Tuple[Path, Iterable[str]]:
+		'''Return the location of the data expected
+
+		The Path value must refer to a file,
+		and is interpreted relatively to the simfile directory
+
+		The iterable is a """path""" within the file.
+		'''
+		return Path(self.DEFAULT_METADATA), []
+
+	@abstractmethod
+	def transform(self, sim: Simfile, target: Path, obj) -> None:
+		'''Transform the simfile using the provided paths and data.
+
+		The data object should be loaded from the data path provided.
+
+		Otherwise, behaves like FileTransform.
 		'''
