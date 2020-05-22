@@ -140,6 +140,10 @@ def _run_transform_action(transform_obj, target: Path, original: Path):
 		sf_orig = simfile.text_to_simfile(f)
 
 	# modify
+	transform_obj.logger.debug(
+		# avoid strange characters
+		f"start: '{sf_orig.title_transliterated or sf_orig.title}' located at '{target}'"
+	)
 	sf_new = _run_transform_obj(transform_obj, sf_orig, target, original)
 	if sf_new is None:
 		return

@@ -48,15 +48,14 @@ class OggConvert(abc.FileTransform, abc.Cleanable):
 		self.old_music = None
 
 		if not sim.music:
-			self.logger.warning(f"simfile '{target}' did not specify an audio file")
+			self.logger.warning('no audio file specified')
 			return None
 
 		old_music = target.parent / Path(sim.music)
 		if not old_music.exists():
 			# TODO what if transform on a different simfile in the folder already clobbered the audio?
 			self.logger.error(
-				f"simfile '{target.name}' in '{target.parent}' referenced "
-				f"nonexistent music '{sim.music}'"
+				f"audio file '{sim.music}' does not exist"
 			)
 			return None
 		if old_music.suffix.lower() == '.ogg':
@@ -100,7 +99,7 @@ class OggConvert(abc.FileTransform, abc.Cleanable):
 
 class Nothing(abc.SimfileTransform):
 	def transform(self, sim: simfile.Simfile) -> None:
-		self.logger.debug(f"nothing happened to '{sim.title}'")
+		self.logger.debug('nothing happened')
 
 
 class NameRegex(abc.FileTransform):
@@ -134,13 +133,12 @@ class NeatOffset(abc.SimfileTransform):
 	def transform(self, sim: simfile.Simfile) -> None:
 		if sim.timing_data.offset % 1 != 0:
 			self.logger.warning(
-				f"simfile '{sim.title}' offset {sim.timing_data.offset} is messy"
+				f"simfile offset {sim.timing_data.offset} is messy"
 			)
 		for chart in sim.charts:
 			if not chart.timing_data:
 				continue
 			if chart.timing_data.offset % 1 != 0:
 				self.logger.warning(
-					f"simfile '{sim.title}' chart {_chart_str(chart)} "
-					f'offset {chart.timing_data.offset} is messy'
+					f"chart {_chart_str(chart)} offset {chart.timing_data.offset} is messy"
 				)
