@@ -7,6 +7,37 @@ from . import simfile
 from .transform import abc
 
 
+def _chart_str(chart: simfile.Chart) -> str:
+	# NOTE this logs like ITG, e.g. SX14
+	# DDR uses [BSEC][SD]P[number]
+
+	game_type = chart.game_type
+	if 'single' in game_type:
+		game_type = 'S'
+	if 'double' in game_type:
+		game_type = 'D'
+
+	difficulty_mapping: dict = {
+		'Beginner': 'N', # ITG: Novice
+		'Easy': 'E',
+		'Medium': 'M',
+		'Hard': 'H',
+		'Challenge': 'X', # ITG: eXpert
+		'Edit': '',
+	}
+	difficulty = difficulty_mapping.get(chart.difficulty, '?')
+
+	descriptors = list(filter(None, [chart.description, chart.credit]))
+	if len(descriptors) == 0:
+		description = ''
+	elif len(descriptors) == 1:
+		description = f" '{descriptors[0]}'"
+	else:
+		description = f" '{descriptors[0]}': {descriptors[1]}"
+
+	return f'{game_type}{difficulty}{chart.meter}{description}'
+
+
 class OggConvert(abc.FileTransform, abc.Cleanable):
 	'''Convert the audio to Ogg Vorbis, the optimal format for Stepmania'''
 
@@ -105,12 +136,11 @@ class NeatOffset(abc.SimfileTransform):
 			self.logger.warning(
 				f"simfile '{sim.title}' offset {sim.timing_data.offset} is messy"
 			)
-		for c in sim.charts:
-			if not c.timing_data:
+		for chart in sim.charts:
+			if not chart.timing_data:
 				continue
-			if c.timing_data.offset % 1 != 0:
+			if chart.timing_data.offset % 1 != 0:
 				self.logger.warning(
-					f"simfile '{sim.title}' "
-					f"chart {c.game_type} {c.difficulty} {c.meter} '{c.description or c.credit} "
-					f'offset {sim.timing_data.offset} is messy'
+					f"simfile '{sim.title}' chart {_chart_str(chart)} "
+					f'offset {chart.timing_data.offset} is messy'
 				)
