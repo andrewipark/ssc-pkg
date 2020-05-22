@@ -1,36 +1,38 @@
 import re
 import subprocess
 from pathlib import Path
+from typing import Optional
 
-from . import simfile, transform_abc
+from . import simfile
+from .transform import abc
 
 
-class OggConvert(transform_abc.FileTransform):
+class OggConvert(abc.FileTransform, abc.Cleanable):
 	'''Convert the audio to Ogg Vorbis, the optimal format for Stepmania'''
 
-	def transform(self, target: Path):
-		# load
-		with open(target, encoding='utf-8') as f:
-			sf = simfile.text_to_simfile(f)
+	old_music: Optional[Path]
 
+	def transform(self, sim: simfile.Simfile, target: Path) -> Optional[simfile.Simfile]:
 		# tons of preconditions
-		if not sf.music:
-			self.logger.warning(f"simfile '{target}' did not specify an audio file")
-			return
+		self.old_music = None
 
-		old_music = target.parent / Path(sf.music)
-		if not old_music or not old_music.exists():
+		if not sim.music:
+			self.logger.warning(f"simfile '{target}' did not specify an audio file")
+			return None
+
+		old_music = target.parent / Path(sim.music)
+		if not old_music.exists():
 			# TODO what if transform on a different simfile in the folder already clobbered the audio?
 			self.logger.error(
 				f"simfile '{target.name}' in '{target.parent}' referenced "
-				f"nonexistent music '{sf.music}'"
+				f"nonexistent music '{sim.music}'"
 			)
-			return
+			return None
 		if old_music.suffix.lower() == '.ogg':
 			# assume it's not lying
-			# TODO check: "Vorbis audio" in file (old_music)
+			# TODO check: "Vorbis audio" in `file (old_music)`
 			self.logger.info('audio is already Ogg Vorbis, doing nothing')
-			return
+			return None
 
 		try:
 			# modify
@@ -40,13 +42,21 @@ class OggConvert(transform_abc.FileTransform):
 		except FileNotFoundError:
 			self.logger.error('oggenc unavailable')
 
-		# swap
-		sf.music = sf.music.parent / (sf.music.stem + '.ogg')
-		target_new = target.parent / (target.name + '.transformed')
-		with open(target_new, 'x', encoding='utf-8') as f:
-			f.write(simfile.simfile_to_ssc(sf))
-		target_new.replace(target)
-		old_music.unlink()
+		sim.music = sim.music.parent / (sim.music.stem + '.ogg')
+		self.old_music = old_music
+		return sim
+
+	def clean(self) -> None:
+		'''remove now-obsolete audio file'''
+		if not self.old_music:
+			return
+
+		try:
+			self.old_music.unlink()
+		except FileNotFoundError:
+			pass
+
+		del self.old_music
 
 
 ####################
@@ -57,15 +67,15 @@ class OggConvert(transform_abc.FileTransform):
 # They are not really transforms so much as checkers.
 
 
-class Nothing(transform_abc.SimfileTransform):
-	def transform(self, target: simfile.Simfile) -> None:
-		self.logger.debug(f"nothing happened to '{target.title}'")
+class Nothing(abc.SimfileTransform):
+	def transform(self, sim: simfile.Simfile) -> None:
+		self.logger.debug(f"nothing happened to '{sim.title}'")
 
 
-class NameRegex(transform_abc.FileTransform):
+class NameRegex(abc.FileTransform):
 	'''Check that filenames exactly match given regex.'''
 
-	def transform(self, target: Path):
+	def transform(self, _, target: Path):
 		# TODO customizable?
 		regex: re.Pattern = re.compile(r'[a-z0-9\-_.]*')
 
@@ -84,23 +94,23 @@ class NameRegex(transform_abc.FileTransform):
 				)
 
 
-class NeatOffset(transform_abc.SimfileTransform):
+class NeatOffset(abc.SimfileTransform):
 	'''Check that the offset value is an exact multiple of one second
 
 	This makes it easy to tell at a glance whether the ITG offset was applied or not,
 	and if that is done automatically, this transform should be earlier.
 	'''
-	def transform(self, target: simfile.Simfile) -> None:
-		if target.timing_data.offset % 1 != 0:
+	def transform(self, sim: simfile.Simfile) -> None:
+		if sim.timing_data.offset % 1 != 0:
 			self.logger.warning(
-				f"simfile '{target.title}' offset {target.timing_data.offset} is messy"
+				f"simfile '{sim.title}' offset {sim.timing_data.offset} is messy"
 			)
-		for c in target.charts:
+		for c in sim.charts:
 			if not c.timing_data:
 				continue
 			if c.timing_data.offset % 1 != 0:
 				self.logger.warning(
-					f"simfile '{target.title}' "
+					f"simfile '{sim.title}' "
 					f"chart {c.game_type} {c.difficulty} {c.meter} '{c.description or c.credit} "
-					f'offset {target.timing_data.offset} is messy'
+					f'offset {sim.timing_data.offset} is messy'
 				)

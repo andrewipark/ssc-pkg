@@ -9,7 +9,8 @@ from collections import deque
 from pathlib import Path
 from typing import Any, Callable, Iterable, List, Optional
 
-from . import simfile, transform_abc, transforms
+from . import simfile, transforms
+from .transform import abc
 
 
 # list file
@@ -114,28 +115,43 @@ def _run_copy(args, files):
 			dest.mkdir(exist_ok=True)
 
 
-def _run_transform_single(target: Path, original: Path, transform_obj):
-	if isinstance(transform_obj, transform_abc.SimfileTransform):
-		# load the simfile anew
-		# This protects against buggy transforms that modify the simfile inadvertently
-		# even though they return None, and also makes logic simpler
-		# for when the user mixes SimfileTransform and FileTransform
-		with open(target, encoding='utf-8') as f:
-			sf_orig = simfile.text_to_simfile(f)
+def _run_transform_obj(
+	transform_obj,
+	sf: simfile.Simfile,
+	target: Path,
+	original: Path,
+) -> Optional[simfile.Simfile]:
+	'''type-specific handling of transform step'''
+	if isinstance(transform_obj, abc.SimfileTransform):
+		return transform_obj.transform(sf)
+	if isinstance(transform_obj, abc.FileTransform):
+		return transform_obj.transform(sf, target)
 
-		sf_new = transform_obj.transform(sf_orig)
-		if sf_new is None:
-			return
+	raise TypeError(f'transform {type(transform_obj).__name__} not recognized')
 
-		# atomically swap the result over the old file
-		target_new = target.parent / (target.name + '.transformed')
-		with open(target_new, 'x', encoding='utf-8') as f:
-			f.write(simfile.simfile_to_ssc(sf_new))
-		target_new.replace(target)
-	elif isinstance(transform_obj, transform_abc.FileTransform):
-		transform_obj.transform(target)
-	else:
-		raise TypeError('transform subclassing check failed')
+
+def _run_transform_action(transform_obj, target: Path, original: Path):
+	'''Run the provided transform with the paths provided'''
+
+	# load
+	# NOTE it might be faster not to load very large simfiles
+	# with FileTransform impls that ignore the object anyways...
+	with open(target, encoding='utf-8') as f:
+		sf_orig = simfile.text_to_simfile(f)
+
+	# modify
+	sf_new = _run_transform_obj(transform_obj, sf_orig, target, original)
+	if sf_new is None:
+		return
+
+	# atomically swap the result over the old file
+	target_new = target.parent / (target.name + '.transformed')
+	with open(target_new, 'x', encoding='utf-8') as f:
+		f.write(simfile.simfile_to_ssc(sf_new))
+	target_new.replace(target)
+
+	if isinstance(transform_obj, abc.Cleanable):
+		transform_obj.clean()
 
 
 def _run_transform(args, simfiles):
@@ -155,7 +171,7 @@ def _run_transform(args, simfiles):
 	for target, original in simfiles_generated:
 		for tobj in transform_objs:
 			try:
-				_run_transform_single(target, original, tobj)
+				_run_transform_action(tobj, target, original)
 			except Exception:
 				logging.error(f"transform '{type(tobj).__name__}' failed on simfile '{target}'")
 				raise
