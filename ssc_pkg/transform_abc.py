@@ -10,11 +10,11 @@ class _logger:
 	'''mixin specially cased for logging'''
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
-		self.logger = logging.getLogger(f'transform.{type(self).__name__}')
+		self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
 
 
 class SimfileTransform(ABC, _logger):
-	'''ABC for transforms that check simfile objects'''
+	'''ABC for transforms that operate directly on simfile objects'''
 
 	@abstractmethod
 	def transform(self, target: Simfile) -> Optional[Simfile]:
@@ -30,8 +30,8 @@ class SimfileTransform(ABC, _logger):
 
 
 class FileTransform(ABC, _logger):
-	'''ABC for transforms that need filesystem data'''
+	'''ABC for transforms that use the filesystem'''
 
 	@abstractmethod
-	def transform(self, target: Path, original: Optional[Path]) -> None:
+	def transform(self, target: Path) -> None:
 		'''Transform the simfile using the provided paths'''

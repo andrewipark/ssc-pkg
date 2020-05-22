@@ -127,14 +127,13 @@ def _run_transform_single(target: Path, original: Path, transform_obj):
 		if sf_new is None:
 			return
 
-		# temporarily write out the result,
-		# and then swap the completed result onto the old file
+		# atomically swap the result over the old file
 		target_new = target.parent / (target.name + '.transformed')
 		with open(target_new, 'x', encoding='utf-8') as f:
 			f.write(simfile.simfile_to_ssc(sf_new))
 		target_new.replace(target)
 	elif isinstance(transform_obj, transform_abc.FileTransform):
-		transform_obj.transform(target, original)
+		transform_obj.transform(target)
 	else:
 		raise TypeError('transform subclassing check failed')
 
@@ -157,9 +156,9 @@ def _run_transform(args, simfiles):
 		for tobj in transform_objs:
 			try:
 				_run_transform_single(target, original, tobj)
-			except Exception as e:
+			except Exception:
 				logging.error(f"transform '{type(tobj).__name__}' failed on simfile '{target}'")
-				raise e
+				raise
 
 
 def run(args):

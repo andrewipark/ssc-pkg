@@ -9,7 +9,7 @@ from .transform_abc import FileTransform, SimfileTransform
 class OggConvert(FileTransform):
 	'''Convert the audio to Ogg Vorbis, the optimal format for Stepmania'''
 
-	def transform(self, target: Path, _):
+	def transform(self, target: Path):
 		# load
 		with open(target, encoding='utf-8') as f:
 				sf = simfile.text_to_simfile(f)
@@ -67,7 +67,7 @@ class Nothing(SimfileTransform):
 class NameRegex(FileTransform):
 	'''Check that filenames exactly match given regex.'''
 
-	def transform(self, target: Path, _):
+	def transform(self, target: Path):
 		# TODO customizable?
 		regex: re.Pattern = re.compile(r'[a-z0-9\-_.]*')
 
