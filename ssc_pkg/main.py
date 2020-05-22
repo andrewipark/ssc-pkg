@@ -115,6 +115,51 @@ def _run_copy(args, files):
 			dest.mkdir(exist_ok=True)
 
 
+def _load_metatransform_data(transform_obj, target: Path, original: Path, max_depth: int = 8):
+	file_path, key_path = transform_obj.data_path()
+	try_paths = [p / file_path for p in [target.parent, original.parent]]
+	try:
+		load_file_path = next(p for p in try_paths if p.exists())
+		transform_obj.logger.debug(
+			f"using metadata file '{load_file_path}'"
+		)
+	except StopIteration:
+		try_paths_str = ', '.join("'" + str(p) + "'" for p in try_paths)
+		transform_obj.logger.debug(
+			f"metadata '{file_path}' not available"
+			f"(searched [{try_paths_str}])"
+		)
+		return None
+
+	# standard YAML sequence
+	from yaml import load
+	try:
+		from yaml import CLoader as Loader
+	except ImportError:
+		from yaml import Loader # type: ignore
+
+	with open(load_file_path) as f:
+		data = load(f, Loader = Loader)
+
+	# too bad if this file doesn't have what we want, even if another one does
+
+	path_so_far: List[str] = []
+	for key in key_path:
+		try:
+			data = data[key]
+		except KeyError:
+			transform_obj.logger.debug(f"metadata '{load_file_path}' did not have '{key}' at {path_so_far}")
+			return None
+
+		path_so_far.append(key)
+		if len(path_so_far) > max_depth:
+			raise RecursionError(
+				f'transform {type(transform_obj).__name__} requested a key too deep ({max_depth})'
+			)
+
+	return data
+
+
 def _run_transform_obj(
 	transform_obj,
 	sf: simfile.Simfile,
@@ -126,6 +171,11 @@ def _run_transform_obj(
 		return transform_obj.transform(sf)
 	if isinstance(transform_obj, abc.FileTransform):
 		return transform_obj.transform(sf, target)
+	if isinstance(transform_obj, abc.MetaTransform):
+		return transform_obj.transform(
+			sf, target,
+			_load_metatransform_data(transform_obj, target, original)
+		)
 
 	raise TypeError(f'transform {type(transform_obj).__name__} not recognized')
 

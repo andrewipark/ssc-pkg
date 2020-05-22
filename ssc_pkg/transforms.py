@@ -102,6 +102,14 @@ class Nothing(abc.SimfileTransform):
 		self.logger.debug('nothing happened')
 
 
+class DemoMeta(abc.MetaTransform):
+	def transform(self, _, target: Path, obj) -> None:
+		try:
+			self.logger.debug(f"metadata keys for '{target}': {obj.keys()}")
+		except AttributeError:
+			self.logger.debug(f"metadata for '{target}' has no keys")
+
+
 class NameRegex(abc.FileTransform):
 	'''Check that filenames exactly match given regex.'''
 
