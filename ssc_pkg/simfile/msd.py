@@ -124,7 +124,7 @@ def _msd_to_timing_data_vcv(tag: str, value_type, value: str):
 	if value_type is str or value_type is Decimal:
 		return value_type(value)
 
-	raise TypeError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
+	raise AssertionError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
 
 
 def _msd_to_timing_data(items: Iterable[msd.MSDItem]):
@@ -171,7 +171,7 @@ def _msd_to_chart_vcv(tag: str, value_type, value: str):
 	if value_type is int or value_type is str:
 		return value_type(value)
 
-	raise TypeError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
+	raise AssertionError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
 
 
 def _msd_to_chart(items: Iterable[msd.MSDItem]) -> Chart:
@@ -227,7 +227,7 @@ def _msd_to_simfile_skel_vcv(tag: str, value_type, value: str):
 			return None
 		return value_type(value)
 
-	raise TypeError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
+	raise AssertionError(_UNHANDLED_TYPE_MSG.format(tag, value_type))
 
 
 def _msd_to_simfile_skel(items: Iterable[msd.MSDItem]) -> Simfile:
