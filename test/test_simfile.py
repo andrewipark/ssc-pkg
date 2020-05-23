@@ -15,7 +15,7 @@ class TestSimfile(unittest.TestCase):
 		self.assertTrue(loaded) # TODO
 
 	def test_kitchen_sink(self):
-		with open(self._get_file('kitchen_sink.ssc')) as f:
+		with open(self._get_file('kitchen_sink.ssc'), encoding='utf-8') as f:
 			loaded = simfile.text_to_simfile(f)
 		self.assertTrue(loaded) # TODO
 
@@ -35,7 +35,7 @@ class TestSimfile(unittest.TestCase):
 
 	def test_ssc_roundtrip(self):
 		'''repeated conversions are lossless'''
-		with open(self._get_file('kitchen_sink.ssc')) as f:
+		with open(self._get_file('kitchen_sink.ssc'), encoding='utf-8') as f:
 			original_loaded = simfile.text_to_simfile(f)
 		original_saved = simfile.simfile_to_ssc(original_loaded)
 		again_loaded = simfile.text_to_simfile(original_saved)
