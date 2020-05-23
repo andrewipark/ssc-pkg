@@ -75,7 +75,6 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(self.simple[4], '1000')
 		self.assertEqual(self.simple[Fraction(39, 2)], '0029')
 
-	def test_getitem_invalid(self):
 		self.assertRaises(IndexError, lambda: self.simple[0])
 		self.assertRaises(IndexError, lambda: self.simple[1])
 		self.assertRaises(IndexError, lambda: self.simple[2])
@@ -106,6 +105,10 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(self.simple[18:], self.simple[18:self.simple_beyond])
 		self.assertEqual(self.simple[:8], self.simple[2:8])
 
+		# step not supported
+		self.assertRaises(IndexError, lambda: self.simple[2:3:1])
+		self.assertRaises(IndexError, lambda: self.simple[10::Fraction(-2, 3)]) # type: ignore # mypy-slice
+
 	def test_density(self):
 		self.assertEqual(
 			self.simple.density(), [
@@ -121,6 +124,12 @@ class TestNoteDataSimple(unittest.TestCase):
 			self.long_jack.density(),
 			[notedata.DensityInfo(self.long_jack_interval, self.long_jack_length - 1)]
 		)
+
+	def test_density_degenerate(self):
+		zero = notedata.NoteData()
+		single = notedata.NoteData([notedata._NoteRow(Fraction(1, 7), '')])
+		self.assertEqual(len(list(zero.density())), 0)
+		self.assertEqual(len(list(single.density())), 0)
 
 	def test_shift(self):
 		# data is shifted

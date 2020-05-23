@@ -114,8 +114,6 @@ class NoteData:
 		return self._notes[self.__index_of_row_must_exist(key)].notes
 
 	def __delta_generator(self):
-		if len(self._notes) <= 1:
-			raise IndexError('invalid operation, chart has too few notes')
 		i = 1
 		while i < len(self._notes):
 			yield self._notes[i].position - self._notes[i - 1].position
@@ -123,8 +121,6 @@ class NoteData:
 
 	def density(self) -> Iterable[DensityInfo]:
 		'''Return the density of the note data'''
-		if len(self._notes) == 1:
-			return []
 		return [DensityInfo(k, sum(1 for _ in g)) for k, g in groupby(self.__delta_generator())]
 
 	# mutation
