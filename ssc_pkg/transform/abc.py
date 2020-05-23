@@ -12,7 +12,7 @@ class _Logger:
 	'''mixin to set up logging in __init__'''
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
-		self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
+		self.logger = logging.getLogger(f'transform.{type(self).__name__}')
 
 
 class Cleanable:
