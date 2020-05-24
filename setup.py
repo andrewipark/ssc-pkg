@@ -2,12 +2,14 @@ from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
-	version='0.8',
+	version='0.9',
 
 	packages=find_packages(),
 	include_package_data=True,
 
-	python_requires='~=3.8', # needed for type introspection and fast local copy
+	python_requires='~=3.8',
+	# 3.8: required for type introspection and fast local copy
+	# 3.9: (might be) required for less annoying type annotations
 
 	install_requires=[
 		'pyyaml~=5.3',
