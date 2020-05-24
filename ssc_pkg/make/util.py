@@ -3,6 +3,12 @@
 from typing import List, Optional, Sequence, Tuple, Union
 from fractions import Fraction
 
+import attr
+
+from ssc_pkg.notedata import Position
+
+
+# support types
 
 IndexPath = Sequence[Union[int, str]]
 
@@ -10,6 +16,22 @@ Scalar = Union[int, Fraction, str]
 
 VarValue = Union[Scalar, Sequence[Scalar]]
 
+
+@attr.s(auto_attribs=True)
+class ChartPoint:
+	'''_NotePosition with chart tag'''
+	chart_index: int
+	position: Position
+
+
+@attr.s(auto_attribs=True)
+class ChartRegion:
+	'''NoteData span with chart tag'''
+	start: ChartPoint
+	length: Position
+
+
+# exception-related
 
 def exc_index_trace(e: Exception):
 	'''Generates neat traceback stacks from exceptions containing index data

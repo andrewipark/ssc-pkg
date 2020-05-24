@@ -8,11 +8,30 @@ from .commands import Command
 from .parse import ParseError
 from .util import VarValue
 
+from ssc_pkg import notedata
+
 
 class Parser:
 	'''Reference parser class for make instructions'''
 
 	# individual commands (for ease in stack traces)
+
+	def _parse_Copy(self, command):
+		MODE_KEY = 'mode'
+		ome = notedata.NoteData.OverlayMode
+		try:
+			try_enum = p.get(command, (MODE_KEY,), p.check_str).upper()
+			try:
+				mode = ome[try_enum]
+			except KeyError:
+				raise ParseError((MODE_KEY,), f'invalid overlay mode: {try_enum}') from None
+		except LookupError:
+			mode = ome.KEEP_OTHER
+		return commands.Copy(
+			targets = p.get_sequence(command, ('dest',), p.parse_ChartPoint),
+			source = p.get(command, ('src',), p.parse_ChartRegion),
+			overlay_mode = mode,
+		)
 
 	def _parse_Pragma(self, raw_command) -> commands.Pragma:
 		return commands.Pragma(
@@ -71,6 +90,8 @@ class Parser:
 		keys = raw_command.keys()
 
 		key_to_func: Mapping[str, Callable[[Any], Command]] = {
+			'copy': self._parse_Copy,
+
 			'pragma': self._parse_Pragma,
 			'def': self._parse_Def,
 			'call': self._parse_Call,

@@ -41,6 +41,26 @@ class TestManagerObj(unittest.TestCase):
 	def setUp(self):
 		self.manager = Manager()
 
+	def test_run_copy(self):
+		pass # TODO
+
+	def test_run_erase(self):
+		pass # TODO
+
+	def test_run_column_swap(self):
+		pass # TODO
+
+	def test_run_column_swap_invalid(self):
+		'''chart is not modified after column_swap with invalid methods'''
+		pass # TODO
+
+	def test_run_delete_chart(self):
+		pass # TODO
+
+	def test_run_delete_chart_invalid(self):
+		'''simfile is not modified after delete w/ invalid index'''
+		pass # TODO
+
 	def test_run_pragma_echo(self):
 		collection = [
 			None,

@@ -108,19 +108,36 @@ FRACTION_REGEX = re.compile(
 
 
 CHARTPOINT_REGEX = re.compile(
-	r'(?P<cref>\d+)\s*@\s*'
+	r'(?P<cref>\w+)\s*@\s*'
+	r'(?:(?P<flags>[lv]*)\s*:\s*)?'
+	r'(?:(?P<offset>\w+)\s*)?'
 	+ FRACTION_REGEX.pattern
 )
 '''regex object to match a `class`:~.ChartPoint:'''
 
 
-def _match_to_Fraction(m: re.Match) -> Fraction:
+def match_to_Fraction(m: re.Match) -> Fraction:
+	'''Converts a match object returned from :const:`FRACTION_REGEX`'''
 	position = Fraction(m['i'] or 0)
 	if m['fn']:
 		position += Fraction(int(m['fn']), int(m['fd']))
 	if m['s'] == '-':
 		position *= -1
 	return position
+
+
+def match_to_ChartPoint(m: re.Match) -> util.ChartPoint:
+	'''Converts a match object returned from :const:`FRACTION_REGEX`'''
+	if m['flags'] or m['offset']:
+		raise NotImplementedError('variables')
+	try:
+		chart_index = int(m['cref'])
+	except ValueError:
+		raise NotImplementedError('variables') from None
+
+	offset = match_to_Fraction(m)
+
+	return util.ChartPoint(chart_index = chart_index, position = offset)
 
 
 # # actual parse methods
@@ -132,7 +149,7 @@ def parse_Fraction(what) -> Fraction:
 		m = FRACTION_REGEX.fullmatch(str(what))
 		if not m:
 			raise ValueError(f'invalid fraction string: {what}')
-		return _match_to_Fraction(m)
+		return match_to_Fraction(m)
 
 	raise TypeError(f"expected a fraction, got {type(what).__name__} instead: {what}")
 
@@ -151,3 +168,20 @@ def parse_scalar(what) -> util.Scalar:
 			return what # str
 
 	raise TypeError(f'expected a scalar, got {type(what).__name__} instead: {what}')
+
+
+def parse_ChartPoint(what) -> util.ChartPoint:
+	s = check_str(what)
+	m = CHARTPOINT_REGEX.fullmatch(s)
+	if not m:
+		raise ValueError(f'invalid chart reference point string: {s}')
+	return match_to_ChartPoint(m)
+
+
+def parse_ChartRegion(what) -> util.ChartRegion:
+	start = get(what, ('src',), parse_ChartPoint)
+	length = get(what, ('len',), parse_Fraction)
+	return util.ChartRegion(start = start, length = length)
+
+
+# parse helpers for complex types

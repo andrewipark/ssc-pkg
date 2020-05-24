@@ -5,6 +5,7 @@ from typing import Any, Iterable, Sequence
 import attr
 
 from . import util
+from ssc_pkg import notedata
 
 
 class Command:
@@ -15,7 +16,12 @@ class Command:
 
 # actions
 
-# (nothing)
+@attr.s(auto_attribs=True)
+class Copy(Command):
+	'''copy a note slice into another place in the simfile'''
+	targets: Sequence[util.ChartPoint]
+	source: util.ChartRegion
+	overlay_mode: notedata.NoteData.OverlayMode
 
 
 # managed

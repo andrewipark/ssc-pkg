@@ -66,6 +66,10 @@ class TestParser(unittest.TestCase):
 		self.simple_pragma_obj = {'pragma': 'TEST'}
 		self.simple_pragma_cmd = c.Pragma('TEST', None)
 
+	# def test_parse_Copy(self): TODO
+
+	# def test_parse_Copy_invalid(self): TODO
+
 	def test_parse_Pragma(self):
 		obj: list = [2, None]
 		obj[1] = obj

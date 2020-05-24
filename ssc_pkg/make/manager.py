@@ -5,7 +5,8 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Union, get_type
 
 import attr
 
-from ssc_pkg.simfile import Simfile
+from ssc_pkg.simfile import Simfile, Chart
+from ssc_pkg import notedata
 
 from . import commands, util
 
@@ -15,6 +16,39 @@ class CommandError(Exception):
 
 	Raisers MUST conform to the :meth:`~ssc_pkg.make.util.exc_index_trace` spec
 	'''
+
+
+def _chart_from_index(simfile: Simfile, chart_index: int, indices) -> Chart:
+	if chart_index < len(simfile.charts):
+		return simfile.charts[chart_index]
+
+	raise CommandError(indices, f'no source chart at index {chart_index}')
+
+
+_GAME_TYPE_COLUMNS_TABLE = {
+	'dance-single': 4,
+	'dance-double': 8,
+	'pump-single': 5,
+	'pump-double': 10,
+	# there's definitely more...
+}
+
+# curiously, mirroring "horizontally" means that the flip is actually across the vertical axis...
+_MIRROR_TRANSLATE_TABLE = {
+	'dance-single': { # 0-3
+		'horizontal': [3, 1, 2, 0],
+		'vertical': [0, 2, 1, 3],
+		'oblique': [2, 3, 0, 1],
+		'antioblique': [1, 0, 3, 2],
+	},
+	'pump-single': {
+		'horizontal': [4, 3, 2, 1, 0],
+		'vertical': [1, 0, 2, 4, 3],
+		'oblique': [0, 4, 2, 3, 1],
+		'antioblique': [3, 1, 2, 0, 4],
+	},
+	# TODO: doubles mode support
+}
 
 
 @attr.s(auto_attribs=True)
@@ -49,6 +83,18 @@ class Manager:
 
 	def __attrs_post_init__(self):
 		self.logger = getLogger(f'{__name__}.{type(self).__name__}')
+
+	def _run_Copy(self, copy: commands.Copy, simfile: Simfile):
+		src = copy.source
+		source: notedata.NoteData = _chart_from_index(simfile, src.start.chart_index, ('source')).notes
+		source = source[src.start.position: src.start.position + src.length] # type: ignore # mypy-slice
+
+		for i, d in enumerate(copy.targets):
+			dest_chart = _chart_from_index(simfile, d.chart_index, ('target', i))
+			dest_chart.notes = dest_chart.notes.overlay(
+				source.shift(d.position - src.start.position),
+				mode = copy.overlay_mode
+			)
 
 	def _run_Pragma(self, pragma: commands.Pragma, _: Simfile):
 		if pragma.name == 'echo':
@@ -107,6 +153,8 @@ class Manager:
 		'''run a command on the simfile, potentially modifying it in-place'''
 
 		cmd_type_fn: Mapping[type, Callable[[Any, Simfile], None]] = {
+			commands.Copy: self._run_Copy,
+
 			commands.Pragma: self._run_Pragma,
 			commands.Group: self._run_Group,
 			commands.Def: self._run_Def,
