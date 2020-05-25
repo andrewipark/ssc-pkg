@@ -13,6 +13,8 @@ disable=
 	logging-fstring-interpolation,
 	logging-not-lazy,
 
+	W0235, # sometimes useful, but flags on mixins
+
 	# too annoying or nonsensical
 	C0103, # naming rules
 	too-few-public-methods,
@@ -22,6 +24,13 @@ disable=
 
 	no-member,
 	not-an-iterable,
+	isinstance-second-argument-not-valid-type,
+	unsubscriptable-object,
+	unsupported-assignment-operation,
+	unsupported-membership-test,
+
+	# attrs makes this ok
+	attribute-defined-outside-init,
 
 [BASIC]
 
@@ -40,5 +49,3 @@ max-line-length=115
 notes=FIXME,TODO,XXX,WARNING,DANGER,CAUTION
 
 [LOGGING]
-
-
