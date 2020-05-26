@@ -62,7 +62,7 @@ class Manager:
 		elif pragma.name == 'callable':
 			# for debug use only!
 			cmd, args = pragma.data[0], pragma.data[1:]
-			result = cmd(*args)
+			result = cmd(self, *args)
 			self.logger.debug(f'callable pragma with args:\n{args}\nreturned:\n{result}')
 		else:
 			raise CommandError((), f"unknown pragma '{pragma.name}'")

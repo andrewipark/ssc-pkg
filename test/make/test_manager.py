@@ -18,7 +18,7 @@ class _LogExecContext:
 
 	def get_command(self, obj) -> c.Pragma:
 		'''Return a pragma that will append some object onto this manager's internal buffer'''
-		return c.Pragma('callable', [(lambda a: self.buf.append(a)), obj])
+		return c.Pragma('callable', [(lambda _, a: self.buf.append(a)), obj])
 
 	def get_commands(self, o: Iterable) -> Sequence[c.Pragma]:
 		return [self.get_command(obj) for obj in o]
