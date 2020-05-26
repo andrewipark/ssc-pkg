@@ -1,6 +1,9 @@
-'''Standalone structured YAML parsing functions.
+'''standalone structured YAML parsing functions
 
-This is also technically a lexer of structured YAML data.'''
+Also technically *structured* YAML lexer functions
+
+All functions chain propagate index data to raised :class:`ParseError` instances
+'''
 
 from fractions import Fraction
 import re
@@ -12,7 +15,7 @@ from . import util
 class ParseError(Exception):
 	'''Exception class for errors returned by parsing.
 
-	Raisers MUST conform to the exc_index_trace spec.
+	Raisers MUST conform to the :meth:`~ssc_pkg.make.util.exc_index_trace` spec
 	'''
 
 
@@ -20,7 +23,14 @@ class ParseError(Exception):
 # help make pretty tracebacks, at the cost of tons of function calls
 
 def get(what, indices: util.IndexPath = ()):
-	'''verifies that a key path exists, and returns what is there'''
+	'''verifies that a key path exists, and returns what is there
+
+	Args:
+		what: the structured YAML object
+		indices: the index path through which to descend into the object
+
+	argument descriptions here apply to all of the other module methods
+	'''
 	if indices:
 		for ii, i in enumerate(indices):
 			try:
@@ -79,6 +89,7 @@ def parse_Fraction(what, indices: util.IndexPath = ()) -> Fraction:
 
 
 def parse_variable(what, indices: util.IndexPath = ()):
+	'''parse the contents as an ``int``, ``Fraction``, and ``str``, in that order of priority'''
 	what = get(what, indices)
 	if isinstance(what, int):
 		return what
@@ -104,6 +115,7 @@ def parse_list(what, indices: util.IndexPath = ()) -> Sequence:
 
 
 def parse_list_type(what, indices: util.IndexPath, parse_fn: Callable[[Any, util.IndexPath], _T]) -> Sequence[_T]:
+	'''convenience function for parsing lists of homogenous type'''
 	what = parse_list(what, indices)
 	ret: List[Optional[_T]] = [None] * len(what)
 	for i in range(len(what)):

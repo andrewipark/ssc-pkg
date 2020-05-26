@@ -1,5 +1,3 @@
-'''Make transform for easy copy-paste'''
-
 from pathlib import Path
 from typing import Iterable, Tuple
 
@@ -12,14 +10,16 @@ from .parser import ParseError, Parser
 
 
 class MakeTransform(MetaTransform):
-	'''top-level manager to interact with ssc-pkg'''
+	'''wraps the functionality of :class:`~.parser.Parser`
+	and :class:`~.manager.Manager` into a transform'''
 
 	def data_path(self) -> Tuple[Path, Iterable[str]]:
 		retval = super().data_path()
 		return (retval[0], ['make'])
 
-	def transform(self, sim: Simfile, target: Path, obj) -> None: # noqa: C901
+	def transform(self, sim: Simfile, target: Path, obj):
 		if obj is None:
+			self.logger.info('no make data specified')
 			return None
 
 		# NOTE could be extracted
@@ -40,5 +40,4 @@ class MakeTransform(MetaTransform):
 				+ util.exc_index_trace_tab(e)
 			) from None
 
-		# return sim
-		return None
+		return sim

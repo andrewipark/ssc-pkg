@@ -6,9 +6,9 @@ import attr
 
 
 class Command:
-	'''Mixin for mypy support'''
+	'''mixin for type support w/ ``mypy``'''
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs) # type: ignore # pylint: disable=W0235 # mypy-mixin
+		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
 
 
 # actions
@@ -29,7 +29,7 @@ class Pragma(Command):
 
 @attr.s(auto_attribs=True)
 class Group(Command):
-	'''sequence of commands in its own scope'''
+	'''sequence of commands to execute in a new scope'''
 	commands: Sequence[Command]
 
 
@@ -48,5 +48,6 @@ class Call(Command):
 
 @attr.s(auto_attribs=True)
 class Let(Command):
+	'''variable definition (untyped)'''
 	name: str
 	value: Any

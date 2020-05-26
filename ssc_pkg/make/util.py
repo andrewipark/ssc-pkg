@@ -1,4 +1,4 @@
-'''miscellaneous functions that don't belong cleanly somewhere'''
+'''miscellaneous functions that defy categorization'''
 
 from typing import List, Optional, Sequence, Tuple, Union
 
@@ -9,14 +9,14 @@ IndexPath = Sequence[Union[int, str]]
 def exc_index_trace(e: Exception):
 	'''Generates neat traceback stacks from exceptions containing index data
 
-	For each exception:
-	args[0] MUST be a (possibly empty) sequence of indices.
+	For each exception,
+	``args[0]`` MUST be a (possibly empty) sequence of indices.
 	Everything else is interpreted as part of a message.
 
-	Index sequences corresponding to empty messages are collapsed.
+	This collapses index sequences with empty messages.
 
-	The exceptions must be all of the same type.
-	This prevents unexpected exceptions from fouling up the chain.
+	To avoid inadvertently swallowing unhandled exceptions,
+	the types of all exceptions must be the same.
 	'''
 
 	exc_pairs: List[Tuple[list, Optional[str]]] = []

@@ -13,7 +13,7 @@ from . import commands
 class CommandError(Exception):
 	'''Exception class for errors caused by commands.
 
-	Raisers MUST conform to the exc_index_trace spec.
+	Raisers MUST conform to the :meth:`~ssc_pkg.make.util.exc_index_trace` spec
 	'''
 
 
@@ -26,12 +26,12 @@ class _Context:
 
 @attr.s(auto_attribs=True)
 class Manager:
-	'''Reference manager class to apply commands onto a simfile in place'''
+	'''Reference manager class'''
 
 	frames: List[_Context] = attr.Factory(lambda: [_Context()])
 
 	def lookup(self, name: str):
-		'''Looks up a variable '''
+		'''searches for a variable in the context frames'''
 		for i in range(len(self.frames)):
 			frame = self.frames[len(self.frames) - i - 1] # search frames from top down
 			if name in frame.variables:
@@ -126,10 +126,7 @@ class Manager:
 			raise CommandError((), f"unhandled command '{command}'")
 
 	def run_many(self, cmds: Iterable[commands.Command], simfile: Simfile):
-		'''iteratively run a stream of commands
-
-		CommandError is chain propagated with index information
-		'''
+		'''convenience function to run a stream of commands'''
 		for i, c in enumerate(cmds):
 			try:
 				self.run(c, simfile)
