@@ -37,7 +37,7 @@ class Group(Command):
 class Def(Command):
 	'''function definition'''
 	name: str
-	command: Command
+	group: Group
 
 
 @attr.s(auto_attribs=True)

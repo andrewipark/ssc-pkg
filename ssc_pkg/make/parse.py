@@ -2,6 +2,8 @@
 
 This is also technically a lexer of structured YAML data.'''
 
+from typing import Sequence
+
 from .util import IndexPath
 
 
@@ -31,4 +33,11 @@ def parse_str(what, indices: IndexPath = ()) -> str:
 	what = get(what, indices)
 	if not isinstance(what, str):
 		raise ParseError(indices, f"expected a string, got '{type(what).__name__}' instead")
+	return what
+
+
+def parse_list(what, indices: IndexPath = ()) -> Sequence:
+	what = get(what, indices)
+	if not isinstance(what, Sequence) or isinstance(what, str):
+		raise ParseError(indices, f"expected a list, got '{type(what).__name__}' instead")
 	return what

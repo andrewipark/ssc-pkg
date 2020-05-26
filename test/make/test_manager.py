@@ -82,7 +82,15 @@ class TestManagerObj(unittest.TestCase):
 			self.assertEqual(ctx_single.buf * i, ctx_def.buf)
 
 	def test_run_def_call_nested(self):
-		pass # TODO needs context support
+		define_blah = c.Def('blah', c.Group([
+			c.Def('blah2', c.Group([])),
+			c.Call('blah2')
+		]))
+
+		self.manager.run(define_blah, Simfile())
+		self.manager.run(c.Call('blah'), Simfile())
+		with ErrorIndex(self, CommandError, ['Call']):
+			self.manager.run(c.Call('blah2'), Simfile()) # not visible from outside 'blah'
 
 	def test_run_call_invalid(self):
 		with ErrorIndex(self, CommandError, ['Call']):

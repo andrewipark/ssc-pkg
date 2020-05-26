@@ -35,16 +35,16 @@ class TestParser(unittest.TestCase):
 	'''
 
 	def _test_parse_multi(self, parse_obj, cmd_obj, extract, result_type):
-		'''test helper for parse trees where a sub object is an arbitrary command structure'''
-		blocks: Sequence[Tuple[Any, c.Command]] = [
-
-			({'pragma': 'one_pragma'}, c.Pragma('one_pragma', None)),
+		'''test helper for parse trees where a sub object is a Group'''
+		blocks: Sequence[Tuple[Any, Sequence[c.Command]]] = [
+			([], []),
+			([{'pragma': 'one_pragma'}], [c.Pragma('one_pragma', None)]),
 		]
 
 		for block, expected in blocks:
 			prepared = parse_obj(block)
 			parse_result = self.parser.parse_command(prepared)
-			expected_result = cmd_obj(expected)
+			expected_result = cmd_obj(c.Group(expected))
 			self.assertIsInstance(parse_result, result_type)
 			self.assertIsInstance(expected_result, result_type)
 			self.assertEqual(
@@ -81,25 +81,24 @@ class TestParser(unittest.TestCase):
 		# TODO pragma type must be string
 
 	def test_parse_Def(self):
-		result = self.parser.parse_command({'def': 'fn_name', 'is': self.simple_pragma_obj})
+		result = self.parser.parse_command({'def': 'fn_name', 'is': [self.simple_pragma_obj]})
 		assert isinstance(result, c.Def)
 		self.assertEqual(result.name, 'fn_name')
-		self.assertEqual(result.command, self.simple_pragma_cmd)
+		self.assertEqual(result.group, c.Group([self.simple_pragma_cmd]))
 
 	def test_parse_Def_body(self):
 		self._test_parse_multi(
 			lambda b: {'def': 'another_name', 'is': b},
 			lambda e: c.Def('another_name', e),
-			lambda cm: cm.command,
+			lambda cm: cm.group,
 			c.Def
 		)
 
 	def test_parse_Group(self):
-		# pretty much the same as 'test_multiple'
 		self._test_parse_multi(
-			lambda b: [b],
-			lambda e: c.Group([e]),
-			lambda cm: list(cm.commands),
+			lambda b: b,
+			lambda e: e,
+			lambda cm: cm.commands,
 			c.Group
 		)
 
@@ -110,10 +109,7 @@ class TestParser(unittest.TestCase):
 		)
 
 	def test_multiple(self):
-		'''test top-level multiple parse structure'''
-		self._test_parse_multi(
-			lambda b: b, lambda e: e, lambda r: r, c.Command
-		)
+		pass # TODO
 
 	def test_invalid(self):
 		collection = [

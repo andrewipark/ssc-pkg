@@ -47,11 +47,13 @@ class Parser:
 
 	def _parse_Def(self, raw_command) -> commands.Def:
 		BODY_KEY = 'is'
+		name = p.parse_str(raw_command, ('def',))
+		try_body = p.parse_list(raw_command, (BODY_KEY,))
 		try:
-			body = self.parse_command(p.get(raw_command, (BODY_KEY,)))
+			body = self._parse_Group(try_body)
 		except ParseError as e:
-			raise ParseError((BODY_KEY,), 'error in function definition') from e
-		return commands.Def(p.parse_str(raw_command['def']), body)
+			raise ParseError(('<def>' + name,), 'error in function definition') from e
+		return commands.Def(name, body)
 
 	def _parse_Call(self, command) -> commands.Call:
 		return commands.Call(p.parse_str(command))
@@ -126,4 +128,4 @@ class Parser:
 			try:
 				yield self.parse_command(raw_command)
 			except ParseError as e:
-				raise ParseError(i) from e
+				raise ParseError((i,)) from e

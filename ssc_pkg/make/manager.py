@@ -1,7 +1,7 @@
 '''context manager and command line runner'''
 
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, Mapping, get_type_hints
+from typing import Any, Callable, Dict, Iterable, List, Mapping, get_type_hints
 
 import attr
 
@@ -18,19 +18,44 @@ class CommandError(Exception):
 
 
 @attr.s(auto_attribs=True)
+class _Context:
+	'''The equivalent of a stack frame for the manager'''
+
+	variables: Dict[str, Any] = attr.Factory(dict)
+
+
+@attr.s(auto_attribs=True)
 class Manager:
 	'''Reference manager class to apply commands onto a simfile in place'''
 
-	variables: Dict[str, Any] = attr.Factory(dict)
+	frames: List[_Context] = attr.Factory(lambda: [_Context()])
+
+	def lookup(self, name: str):
+		'''Looks up a variable '''
+		for i in range(len(self.frames)):
+			frame = self.frames[len(self.frames) - i - 1] # search frames from top down
+			if name in frame.variables:
+				return frame.variables[name]
+		else:
+			raise KeyError(name)
+
+	def __enter__(self):
+		'''makes this manager enter a new, fresh context'''
+		self.frames.append(_Context())
+
+	def __exit__(self, exc_type, exc_info, _):
+		'''makes this manager exit its current context'''
+		self.frames.pop()
+		return False
 
 	def __attrs_post_init__(self):
 		self.logger = getLogger(f'{__name__}.{type(self).__name__}')
 
 	def _run_Pragma(self, pragma: commands.Pragma, _: Simfile):
 		if pragma.name == 'echo':
-			self.logger.info(f'\n{pragma.data}')
+			self.logger.info(f'{pragma.data}')
 		elif pragma.name == 'vars':
-			for var, val in self.variables.items():
+			for var, val in self.frames[-1].variables.items():
 				self.logger.info(f"'{var}' = {val}")
 		elif pragma.name == 'raise':
 			raise CommandError((), f'unconditional raise via pragma: {pragma.data}')
@@ -43,24 +68,26 @@ class Manager:
 			raise CommandError((), f"unknown pragma '{pragma.name}'")
 
 	def _run_Group(self, group: commands.Group, simfile: Simfile):
-		self.run_many(group.commands, simfile)
+		with self:
+			self.run_many(group.commands, simfile)
 
 	def _run_Def(self, c_def: commands.Def, _: Simfile):
-		self.variables[c_def.name] = c_def
+		self.frames[-1].variables[c_def.name] = c_def
 
 	def _run_Call(self, call: commands.Call, simfile: Simfile):
-		if call.name not in self.variables:
-			raise CommandError(('Call',), f"function '{call.name}' not defined")
-		what = self.variables[call.name]
+		try:
+			what = self.lookup(call.name)
+		except KeyError:
+			raise CommandError(('Call',), f"function '{call.name}' does not exist") from None
 		if not isinstance(what, commands.Def):
 			raise CommandError(
 				('Call',),
 				f"variable '{call.name}' is not a function, but {type(what).__name__} instead"
 			)
 		try:
-			self.run(what.command, simfile)
+			self._run_Group(what.group, simfile)
 		except CommandError as e:
-			raise CommandError((call.name,), "error during function call") from e
+			raise CommandError(('<fn>' + call.name,), "error during function call") from e
 
 	def run(self, command: commands.Command, simfile: Simfile):
 		'''run a command on the simfile, potentially modifying it in-place'''
@@ -87,6 +114,10 @@ class Manager:
 					# these are structural, we don't care about the name
 					raise e
 				raise CommandError((ct.__name__, )) from e
+			except Exception:
+				# print out whatever failed since it may not be obvious from stack trace
+				print(command)
+				raise
 
 		else:
 			raise CommandError((), f"unhandled command '{command}'")
