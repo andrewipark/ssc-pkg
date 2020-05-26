@@ -4,6 +4,7 @@
 	:maxdepth: 2
 
 	usage
+	roadmap
 	API reference <_apidoc_src/modules>
 
 
