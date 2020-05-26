@@ -122,9 +122,12 @@ class Parser:
 
 		raise ParseError((), f'unknown type of command: {raw_command}')
 
-	def parse_commands(self, commands: Iterable) -> Iterable[Command]:
-		'''Parse a lot of commands'''
-		for i, raw_command in enumerate(commands):
+	def parse_commands(self, raw_commands: Iterable) -> Iterable[Command]:
+		'''iteratively parse a stream of commands
+
+		ParseError is chain propagated index information
+		'''
+		for i, raw_command in enumerate(raw_commands):
 			try:
 				yield self.parse_command(raw_command)
 			except ParseError as e:

@@ -36,8 +36,7 @@ class Manager:
 			frame = self.frames[len(self.frames) - i - 1] # search frames from top down
 			if name in frame.variables:
 				return frame.variables[name]
-		else:
-			raise KeyError(name)
+		raise KeyError(name)
 
 	def __enter__(self):
 		'''makes this manager enter a new, fresh context'''
@@ -122,8 +121,12 @@ class Manager:
 		else:
 			raise CommandError((), f"unhandled command '{command}'")
 
-	def run_many(self, commands: Iterable[commands.Command], simfile: Simfile):
-		for i, c in enumerate(commands):
+	def run_many(self, cmds: Iterable[commands.Command], simfile: Simfile):
+		'''iteratively run a stream of commands
+
+		CommandError is chain propagated with index information
+		'''
+		for i, c in enumerate(cmds):
 			try:
 				self.run(c, simfile)
 			except CommandError as e:
