@@ -135,7 +135,7 @@ class TestParser(unittest.TestCase):
 		self._test_parse_multi(
 			lambda b: {'for': 's', 'in': [4, 5, 2, 9], 'do': b},
 			lambda e: c.For('s', [4, 5, 2, 9], e),
-			lambda cm: cm.do_body,
+			lambda cm: cm.body,
 			c.For
 		)
 

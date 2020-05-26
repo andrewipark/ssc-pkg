@@ -17,14 +17,15 @@ class _LogExecContext:
 
 	buf: list = attr.Factory(list)
 
-	def get_command(self, obj) -> c.Pragma:
-		'''Return a pragma that will append some object onto this manager's internal buffer'''
+	def push(self, obj) -> c.Pragma:
+		'''Return a pragma that records some constant object'''
 		return c.Pragma('callable', [(lambda _, a: self.buf.append(a)), obj])
 
-	def get_commands(self, o: Iterable) -> Sequence[c.Pragma]:
-		return [self.get_command(obj) for obj in o]
+	def push_many(self, o: Iterable) -> Sequence[c.Pragma]:
+		return [self.push(obj) for obj in o]
 
-	def get_lookup(self, name) -> c.Pragma:
+	def push_lookup(self, name) -> c.Pragma:
+		'''Return a pragma that records the value of some variable'''
 		return c.Pragma('callable', [lambda m: self.buf.append(m.lookup(name))])
 
 
@@ -62,7 +63,7 @@ class TestManagerObj(unittest.TestCase):
 	def test_run_pragma_callable(self):
 		'''if this test fails, a lot of the control structure tests are useless'''
 		ctx = _LogExecContext()
-		self.mgr_run(ctx.get_command(666666))
+		self.mgr_run(ctx.push(666666))
 		self.assertEqual(ctx.buf, [666666])
 
 	def test_run_pragma_invalid(self):
@@ -71,10 +72,10 @@ class TestManagerObj(unittest.TestCase):
 	def test_run_group(self):
 		ctx_single = _LogExecContext()
 		for i in range(self.GROUP_SIZE):
-			self.mgr_run(ctx_single.get_command(i))
+			self.mgr_run(ctx_single.push(i))
 
 		ctx_group = _LogExecContext()
-		self.mgr_run(c.Group(ctx_group.get_commands(range(self.GROUP_SIZE))))
+		self.mgr_run(c.Group(ctx_group.push_many(range(self.GROUP_SIZE))))
 
 		self.assertEqual(ctx_single.buf, ctx_group.buf)
 
@@ -84,10 +85,10 @@ class TestManagerObj(unittest.TestCase):
 		# basically the same as group, except now we have to define the function beforehand
 		ctx_single = _LogExecContext()
 		for i in range(self.GROUP_SIZE):
-			self.mgr_run(ctx_single.get_command(i))
+			self.mgr_run(ctx_single.push(i))
 
 		ctx_def = _LogExecContext()
-		commands = c.Group(ctx_def.get_commands(range(self.GROUP_SIZE)))
+		commands = c.Group(ctx_def.push_many(range(self.GROUP_SIZE)))
 		self.mgr_run(c.Def('run_def_call_simple', commands))
 
 		self.assertEqual([], ctx_def.buf)
@@ -148,5 +149,5 @@ class TestManagerObj(unittest.TestCase):
 		for_loop_iterable = list(range(8))
 
 		ctx = _LogExecContext()
-		self.mgr_run(c.For('i', for_loop_iterable, c.Group([ctx.get_lookup('i')])))
+		self.mgr_run(c.For('i', for_loop_iterable, c.Group([ctx.push_lookup('i')])))
 		self.assertEqual(ctx.buf, for_loop_iterable)

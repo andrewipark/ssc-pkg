@@ -1,6 +1,6 @@
 '''make: simple user-specified transforms'''
 
-from .make import MakeTransform
+from ._make import MakeTransform
 
 
 __all__ = ['MakeTransform']

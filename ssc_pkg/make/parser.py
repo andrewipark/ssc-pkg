@@ -40,10 +40,13 @@ class Parser:
 	# individual commands (for ease in stack traces)
 
 	def _parse_Pragma(self, raw_command) -> commands.Pragma:
-		return commands.Pragma(p.parse_str(raw_command, ('pragma',)), raw_command.get('data', None))
+		return commands.Pragma(
+			name = p.parse_str(raw_command, ('pragma',)),
+			data = raw_command.get('data', None),
+		)
 
 	def _parse_Group(self, raw_commands) -> commands.Group:
-		return commands.Group(list(self.parse_commands(raw_commands)))
+		return commands.Group(commands = list(self.parse_commands(raw_commands)))
 
 	def _parse_Group_h(self, what, indices, msg) -> commands.Group:
 		'''like the helper methods in parse.py,
@@ -54,16 +57,16 @@ class Parser:
 		try:
 			return self._parse_Group(what)
 		except ParseError as e:
-			raise ParseError((indices,), str) from e
+			raise ParseError((indices,), msg) from e
 
 	def _parse_Def(self, raw_command) -> commands.Def:
-		BODY_KEY = 'is'
-		name = p.parse_str(raw_command, ('def',))
-		body = self._parse_Group_h(raw_command, (BODY_KEY,), 'definition of function body')
-		return commands.Def(name, body)
+		return commands.Def(
+			name = p.parse_str(raw_command, ('def',)),
+			body = self._parse_Group_h(raw_command, ('is',), 'definition of function body'),
+		)
 
 	def _parse_Call(self, command) -> commands.Call:
-		return commands.Call(p.parse_str(command))
+		return commands.Call(name = p.parse_str(command))
 
 	def _parse_Let(self, raw_command) -> commands.Let:
 		VALUE_KEY = 'is'
@@ -77,13 +80,14 @@ class Parser:
 				value = p.parse_variable(try_value, ())
 		except ParseError as e:
 			raise ParseError((VALUE_KEY,), 'declaration value') from e
-		return commands.Let(name, value)
+		return commands.Let(name = name, value = value)
 
 	def _parse_For(self, raw_command) -> commands.For:
-		name = p.parse_str(raw_command, ('for',))
-		in_iterable = p.parse_list_type(raw_command, ('in',), p.parse_variable)
-		body = self._parse_Group_h(raw_command, ('do',), 'for-loop body')
-		return commands.For(name, in_iterable, body)
+		return commands.For(
+			name = p.parse_str(raw_command, ('for',)),
+			in_iterable = p.parse_list_type(raw_command, ('in',), p.parse_variable),
+			body = self._parse_Group_h(raw_command, ('do',), 'for-loop body'),
+		)
 
 	# type helpers
 

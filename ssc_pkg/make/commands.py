@@ -58,4 +58,4 @@ class For(Command):
 	'''indexed loop construct'''
 	name: str
 	in_iterable: Iterable[Any]
-	do_body: Group
+	body: Group

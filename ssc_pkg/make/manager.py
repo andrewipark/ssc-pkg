@@ -99,7 +99,7 @@ class Manager:
 				# this is implementation-defined and may change
 				with self:
 					self._run_Let(commands.Let(c_for.name, value), simfile)
-					self._run_Group(c_for.do_body, simfile)
+					self._run_Group(c_for.body, simfile)
 			except CommandError as e:
 				raise CommandError((i,), f"'{c_for.name}': {type(value).__name__} := {value}") from e
 
