@@ -1,4 +1,5 @@
 import unittest
+from fractions import Fraction
 from typing import Any, Hashable, Iterable, Sequence, Tuple, Type
 
 import attr
@@ -107,6 +108,27 @@ class TestParser(unittest.TestCase):
 			self.parser.parse_command({'call': 'A_FUNCTION'}),
 			c.Call('A_FUNCTION')
 		)
+
+	def test_parse_Let(self):
+		let_table: dict = {
+			3: 3,
+			-3920: -3920,
+			'3/5': Fraction(3, 5),
+			'abc': 'abc',
+			'': '',
+		}
+
+		for orig, ex in let_table.items():
+			self.assertEqual(
+				self.parser.parse_command({'let': f'probably_a_{ex}', 'is': orig}),
+				c.Let(f'probably_a_{ex}', ex)
+			)
+			self.assertEqual(
+				self.parser.parse_command({'let': f'probably_a_{ex}', 'is': [orig] * 5}),
+				c.Let(f'probably_a_{ex}', [ex] * 5)
+			)
+
+	# whole-picture tests
 
 	def test_multiple(self):
 		pass # TODO

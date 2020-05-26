@@ -1,5 +1,6 @@
 import unittest
 from typing import ClassVar, Iterable, Sequence
+from fractions import Fraction
 
 import attr
 
@@ -81,7 +82,8 @@ class TestManagerObj(unittest.TestCase):
 			self.manager.run(c.Call('run_def_call_simple'), Simfile())
 			self.assertEqual(ctx_single.buf * i, ctx_def.buf)
 
-	def test_run_def_call_nested(self):
+	def test_run_def_call_scope_visibility(self):
+		'''Test that objects defined within Group scopes are not visible outside'''
 		define_blah = c.Def('blah', c.Group([
 			c.Def('blah2', c.Group([])),
 			c.Call('blah2')
@@ -100,3 +102,20 @@ class TestManagerObj(unittest.TestCase):
 
 		self.manager.run(c.Def('might_exist', c.Group([])), Simfile())
 		self.manager.run(c.Call('might_exist'), Simfile())
+
+	def test_run_let(self):
+		value_test = {
+			'a_variable': 35,
+			'a_list': [3, 5, 20],
+			'a_mapping': {'a': 3, 'b': 63},
+			'a_None': None,
+			'a_Fraction': Fraction(42069, 17),
+		}
+
+		for name, value in value_test.items():
+			self.manager.run(c.Let(name, value), Simfile())
+			self.assertEqual(self.manager.frames[-1].variables[name], value)
+
+	def test_run_let_scope_shadowing(self):
+		'''Test that objects defined within scopes shadow objects defined outside the scope'''
+		pass # TODO

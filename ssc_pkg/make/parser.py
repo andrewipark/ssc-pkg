@@ -58,6 +58,20 @@ class Parser:
 	def _parse_Call(self, command) -> commands.Call:
 		return commands.Call(p.parse_str(command))
 
+	def _parse_Let(self, raw_command) -> commands.Let:
+		VALUE_KEY = 'is'
+		name = p.parse_str(raw_command, ('let',))
+		try_value = p.get(raw_command, (VALUE_KEY,))
+		# only supports scalars and lists right now
+		try:
+			if not isinstance(try_value, str) and isinstance(try_value, Sequence):
+				value = p.parse_list_type(try_value, (), p.parse_variable)
+			else:
+				value = p.parse_variable(try_value, ())
+		except ParseError as e:
+			raise ParseError(('<let>' + name,), 'error in variable declaration') from e
+		return commands.Let(name, value)
+
 	# type helpers
 
 	def _parse_mapping(self, raw_command: Mapping) -> Command:
@@ -67,8 +81,9 @@ class Parser:
 			'pragma': self._parse_Pragma,
 			'def': self._parse_Def,
 			'call': self._parse_Call,
+			'let': self._parse_Let,
 		}
-		no_recurse_obj = {'pragma', 'def', 'group'}
+		no_recurse_obj = {'pragma', 'def', 'let'}
 
 		for k in key_to_func:
 			if k in keys:

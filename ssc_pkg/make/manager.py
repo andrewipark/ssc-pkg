@@ -88,6 +88,9 @@ class Manager:
 		except CommandError as e:
 			raise CommandError(('<fn>' + call.name,), "error during function call") from e
 
+	def _run_Let(self, let: commands.Let, _: Simfile):
+		self.frames[-1].variables[let.name] = let.value
+
 	def run(self, command: commands.Command, simfile: Simfile):
 		'''run a command on the simfile, potentially modifying it in-place'''
 
@@ -96,6 +99,7 @@ class Manager:
 			commands.Group: self._run_Group,
 			commands.Def: self._run_Def,
 			commands.Call: self._run_Call,
+			commands.Let: self._run_Let,
 		}
 		# static type checking equivalent: Mapping[Type[_T], Callable[[_T, Simfile], None]]
 		# 'unbound type variable' :(

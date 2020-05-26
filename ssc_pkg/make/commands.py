@@ -44,3 +44,9 @@ class Def(Command):
 class Call(Command):
 	'''function call'''
 	name: str
+
+
+@attr.s(auto_attribs=True)
+class Let(Command):
+	name: str
+	value: Any
