@@ -2,7 +2,7 @@ from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
-	version='0.9',
+	version='0.10',
 
 	packages=find_packages(),
 	include_package_data=True,
