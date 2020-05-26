@@ -19,8 +19,8 @@ class Command:
 @attr.s(auto_attribs=True)
 class Copy(Command):
 	'''copy a note slice into another place in the simfile'''
-	targets: Sequence[util.ChartPoint]
-	source: util.ChartRegion
+	targets: Sequence[util.ChartPointVar]
+	source: util.ChartRegionVar
 	overlay_mode: notedata.NoteData.OverlayMode
 
 

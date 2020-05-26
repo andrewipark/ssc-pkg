@@ -5,7 +5,7 @@ Also technically *structured* YAML lexer functions
 
 from fractions import Fraction
 import re
-from typing import Any, Callable, List, Sequence, TypeVar, cast
+from typing import Any, Callable, List, Sequence, TypeVar, Union, cast
 
 from . import util
 
@@ -62,7 +62,7 @@ def check_int(what) -> int:
 	return what
 
 
-def check_str(what, indices: util.IndexPath = ()) -> str:
+def check_str(what) -> str:
 	'''Because Python 3's :obj:`int` is unlimited size,
 	we can assume that YAML strings never represent an :obj:`int`
 	'''
@@ -109,11 +109,10 @@ FRACTION_REGEX = re.compile(
 
 CHARTPOINT_REGEX = re.compile(
 	r'(?P<cref>\w+)\s*@\s*'
-	r'(?:(?P<flags>[lv]*)\s*:\s*)?'
-	r'(?:(?P<offset>\w+)\s*)?'
+	r'(?:(?P<base>\w+)\s+)?'
 	+ FRACTION_REGEX.pattern
 )
-'''regex object to match a `class`:~.ChartPoint:'''
+'''regex object to match a `class`:~.ChartPointVar:'''
 
 
 def match_to_Fraction(m: re.Match) -> Fraction:
@@ -126,18 +125,16 @@ def match_to_Fraction(m: re.Match) -> Fraction:
 	return position
 
 
-def match_to_ChartPoint(m: re.Match) -> util.ChartPoint:
+def match_to_ChartPointVar(m: re.Match) -> util.ChartPointVar:
 	'''Converts a match object returned from :const:`FRACTION_REGEX`'''
-	if m['flags'] or m['offset']:
-		raise NotImplementedError('variables')
+	base = util.VarRef(m['base']) if m['base'] else None
 	try:
-		chart_index = int(m['cref'])
+		chart_index: Union[int, util.VarRef] = int(m['cref'])
 	except ValueError:
-		raise NotImplementedError('variables') from None
-
+		chart_index = util.VarRef(m['cref'])
 	offset = match_to_Fraction(m)
 
-	return util.ChartPoint(chart_index = chart_index, position = offset)
+	return util.ChartPointVar(chart_index = chart_index, base = base, offset = offset)
 
 
 # # actual parse methods
@@ -170,18 +167,18 @@ def parse_scalar(what) -> util.Scalar:
 	raise TypeError(f'expected a scalar, got {type(what).__name__} instead: {what}')
 
 
-def parse_ChartPoint(what) -> util.ChartPoint:
+def parse_ChartPointVar(what) -> util.ChartPointVar:
 	s = check_str(what)
 	m = CHARTPOINT_REGEX.fullmatch(s)
 	if not m:
-		raise ValueError(f'invalid chart reference point string: {s}')
-	return match_to_ChartPoint(m)
+		raise ValueError(f'invalid chart point string: {s}')
+	return match_to_ChartPointVar(m)
 
 
-def parse_ChartRegion(what) -> util.ChartRegion:
-	start = get(what, ('src',), parse_ChartPoint)
+def parse_ChartRegionVar(what) -> util.ChartRegionVar:
+	start = get(what, ('src',), parse_ChartPointVar)
 	length = get(what, ('len',), parse_Fraction)
-	return util.ChartRegion(start = start, length = length)
+	return util.ChartRegionVar(start = start, length = length)
 
 
 # parse helpers for complex types

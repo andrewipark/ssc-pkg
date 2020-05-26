@@ -1,7 +1,8 @@
 '''context manager and command line runner'''
 
+from fractions import Fraction
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Union, get_type_hints
+from typing import Any, Callable, Dict, Iterable, List, Mapping, TypeVar, Type, Union, get_type_hints
 
 import attr
 
@@ -9,6 +10,9 @@ from ssc_pkg.simfile import Simfile, Chart
 from ssc_pkg import notedata
 
 from . import commands, util
+
+
+_T = TypeVar('_T')
 
 
 class CommandError(Exception):
@@ -23,32 +27,6 @@ def _chart_from_index(simfile: Simfile, chart_index: int, indices) -> Chart:
 		return simfile.charts[chart_index]
 
 	raise CommandError(indices, f'no source chart at index {chart_index}')
-
-
-_GAME_TYPE_COLUMNS_TABLE = {
-	'dance-single': 4,
-	'dance-double': 8,
-	'pump-single': 5,
-	'pump-double': 10,
-	# there's definitely more...
-}
-
-# curiously, mirroring "horizontally" means that the flip is actually across the vertical axis...
-_MIRROR_TRANSLATE_TABLE = {
-	'dance-single': { # 0-3
-		'horizontal': [3, 1, 2, 0],
-		'vertical': [0, 2, 1, 3],
-		'oblique': [2, 3, 0, 1],
-		'antioblique': [1, 0, 3, 2],
-	},
-	'pump-single': {
-		'horizontal': [4, 3, 2, 1, 0],
-		'vertical': [1, 0, 2, 4, 3],
-		'oblique': [0, 4, 2, 3, 1],
-		'antioblique': [3, 1, 2, 0, 4],
-	},
-	# TODO: doubles mode support
-}
 
 
 @attr.s(auto_attribs=True)
@@ -72,6 +50,41 @@ class Manager:
 				return frame.variables[name]
 		raise KeyError(name)
 
+	def has(self, name: str):
+		return any(name in f.variables for f in self.frames)
+
+	def lookup_typed(self, name: str, t: Type[_T]) -> _T:
+		'''convenience lookup function with guaranteed return type (caveat: generic subscripting)'''
+		try:
+			test = self.lookup(name)
+		except KeyError:
+			raise CommandError(f"'{name}' not defined") from None
+		if issubclass(t, Fraction): # special case convertible types
+			if isinstance(test, int):
+				test = Fraction(test)
+		if not isinstance(test, t):
+			raise CommandError(f"'{name}' is a {type(test).__name__}, not {t.__name__}")
+		return test
+
+	def resolve(self, what: Union[_T, util.VarRef], t: Type[_T]) -> _T:
+		'''Another convenience lookup function for converting Union[variable, object] to assured object'''
+		if isinstance(what, util.VarRef):
+			return self.lookup_typed(what.name, t)
+		return what
+
+	def reduce_ChartPoint(self, chart_point: util.ChartPointVar) -> util.ChartPoint:
+		base = self.lookup_typed(chart_point.base.name, Fraction) if chart_point.base else Fraction(0)
+		return util.ChartPoint(
+			chart_index = self.resolve(chart_point.chart_index, int),
+			position = base + self.resolve(chart_point.offset, Fraction),
+		)
+
+	def reduce_ChartRegion(self, chart_region: util.ChartRegionVar) -> util.ChartRegion:
+		return util.ChartRegion(
+			start = self.reduce_ChartPoint(chart_region.start),
+			length = self.resolve(chart_region.length, Fraction),
+		)
+
 	def __enter__(self):
 		'''makes this manager enter a new, fresh context'''
 		self.frames.append(_Context())
@@ -85,11 +98,12 @@ class Manager:
 		self.logger = getLogger(f'{__name__}.{type(self).__name__}')
 
 	def _run_Copy(self, copy: commands.Copy, simfile: Simfile):
-		src = copy.source
+		src = self.reduce_ChartRegion(copy.source)
 		source: notedata.NoteData = _chart_from_index(simfile, src.start.chart_index, ('source')).notes
 		source = source[src.start.position: src.start.position + src.length] # type: ignore # mypy-slice
 
-		for i, d in enumerate(copy.targets):
+		for i, dv in enumerate(copy.targets):
+			d = self.reduce_ChartPoint(dv)
 			dest_chart = _chart_from_index(simfile, d.chart_index, ('target', i))
 			dest_chart.notes = dest_chart.notes.overlay(
 				source.shift(d.position - src.start.position),

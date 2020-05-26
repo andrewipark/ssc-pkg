@@ -28,8 +28,8 @@ class Parser:
 		except LookupError:
 			mode = ome.KEEP_OTHER
 		return commands.Copy(
-			targets = p.get_sequence(command, ('dest',), p.parse_ChartPoint),
-			source = p.get(command, ('src',), p.parse_ChartRegion),
+			targets = p.get_sequence(command, ('dest',), p.parse_ChartPointVar),
+			source = p.get(command, (), p.parse_ChartRegionVar),
 			overlay_mode = mode,
 		)
 

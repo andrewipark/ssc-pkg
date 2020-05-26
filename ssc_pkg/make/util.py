@@ -10,11 +10,12 @@ from ssc_pkg.notedata import Position
 
 # support types
 
+# # concrete
+
 IndexPath = Sequence[Union[int, str]]
 
-Scalar = Union[int, Fraction, str]
 
-VarValue = Union[Scalar, Sequence[Scalar]]
+Scalar = Union[int, Fraction, str]
 
 
 @attr.s(auto_attribs=True)
@@ -29,6 +30,32 @@ class ChartRegion:
 	'''NoteData span with chart tag'''
 	start: ChartPoint
 	length: Position
+
+
+# # variable
+
+VarValue = Union[Scalar, Sequence[Scalar]]
+
+
+@attr.s(auto_attribs=True)
+class VarRef:
+	'''reference to context-defined variable'''
+	name: str
+
+
+@attr.s(auto_attribs=True)
+class ChartPointVar:
+	'''Variable-enabled version of :class:`ChartPoint`'''
+	chart_index: Union[int, VarRef]
+	base: Optional[VarRef]
+	offset: Union[Position, VarRef]
+
+
+@attr.s(auto_attribs=True)
+class ChartRegionVar:
+	'''Variable-enabled version of :class:`ChartRegion`'''
+	start: ChartPointVar # or union with VarRef itself? TODO no resolve support in manager yet
+	length: Union[Position, VarRef]
 
 
 # exception-related
