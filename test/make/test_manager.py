@@ -55,10 +55,16 @@ class TestManagerObj(unittest.TestCase):
 			self.assertIn(str(collection[i]), lm.output[i])
 
 	def test_run_pragma_vars(self):
-		pass # TODO
+		with self.assertLogs(self.manager.logger) as lm:
+			self.mgr_run(c.Def('empty_fn', c.Group([])))
+			self.mgr_run(c.Let('aveoihw', 23978294))
+			self.mgr_run(c.Pragma('vars', None))
+		for v in ['empty_fn', 'aveoihw', '23978294']:
+			self.assertIn(v, ''.join(lm.output))
 
 	def test_run_pragma_raise(self):
-		pass # TODO
+		with ErrorIndex(self, CommandError, ['Pragma']):
+			self.mgr_run(c.Pragma('raise', None))
 
 	def test_run_pragma_callable(self):
 		'''if this test fails, a lot of the control structure tests are useless'''
