@@ -2,13 +2,13 @@ from enum import Enum, auto
 from fractions import Fraction
 from itertools import chain, groupby
 from math import gcd
-from typing import Iterable, List, Sequence, Union, overload
+from typing import Generic, Iterable, List, Sequence, Union, TypeVar, overload
 
 import attr
 
 
 _NotePosition = Fraction
-_NoteType = Sequence # SM: str
+_NoteType = TypeVar('_NoteType', str, Sequence)
 
 
 # NOTE blocked https://github.com/python/mypy/issues/3186
@@ -27,7 +27,7 @@ class DensityInfo:
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
-class _NoteRow:
+class _NoteRow(Generic[_NoteType]):
 	position: _NotePosition # = attr.ib(converter=Fraction)
 	# causes slowdown, and caller should know better anyways?
 	notes: _NoteType
@@ -39,7 +39,7 @@ def _normalize_notes(notes_list: Iterable[_NoteRow]) -> List[_NoteRow]:
 
 
 @attr.s(auto_attribs=True, frozen=True)
-class NoteData:
+class NoteData(Generic[_NoteType]):
 	'''Class representing note data of a simfile. Data is stored by row.
 
 	This is intended as a container class and doesn't store nor handle
@@ -58,7 +58,9 @@ class NoteData:
 				raise IndexError(f'rows {i-1} and {i} have identical position {prev.position}')
 
 	# all the notes stored by this object, in [beat: notes] form
-	_notes: List[_NoteRow] = attr.ib(factory=list, converter=_normalize_notes, validator=__validate_notes)
+	_notes: List[_NoteRow[_NoteType]] = attr.ib(
+		factory=list, converter=_normalize_notes, validator=__validate_notes
+	)
 
 	# access
 
@@ -88,7 +90,7 @@ class NoteData:
 		return (i < len(self._notes)) and (self._notes[i].position == position)
 
 	@overload
-	def __getitem__(self, key: slice) -> 'NoteData':
+	def __getitem__(self, key: slice) -> 'NoteData[_NoteType]':
 		'''Slice the notedata at the given boundaries, and return a contiguous subset'''
 	@overload
 	def __getitem__(self, key: _NotePosSafe) -> _NoteType:
@@ -125,11 +127,11 @@ class NoteData:
 
 	# mutation
 
-	def shift(self, amount: _NotePosSafe) -> 'NoteData':
+	def shift(self, amount: _NotePosSafe) -> 'NoteData[_NoteType]':
 		'''Shift all the notes by a given amount in time'''
 		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
 
-	def clear_range(self, start: _NotePosSafe, stop: _NotePosSafe) -> 'NoteData':
+	def clear_range(self, start: _NotePosSafe, stop: _NotePosSafe) -> 'NoteData[_NoteType]':
 		'''Removes all the notes in the specified half-open range [start, stop)'''
 		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
 		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
@@ -139,7 +141,7 @@ class NoteData:
 		KEEP_OTHER = auto()
 		RAISE = auto()
 
-	def overlay(self, other: 'NoteData', mode: OverlayMode = OverlayMode.RAISE) -> 'NoteData':
+	def overlay(self, other: 'NoteData[_NoteType]', mode: OverlayMode = OverlayMode.RAISE) -> 'NoteData[_NoteType]':
 		'''Overlay another NoteData object onto this one'''
 
 		if mode == self.OverlayMode.RAISE:
@@ -172,7 +174,7 @@ class NoteData:
 		return attr.evolve(self, notes = rows)
 
 
-def sm_to_notedata(data: str) -> NoteData:
+def sm_to_notedata(data: str) -> NoteData[str]:
 	measures: List[List[str]] = [m.strip().split() for m in data.split(_SM_TEXT_MEASURE_SEP)]
 	measure_notes: List[List[_NoteRow]] = [
 		[
@@ -196,7 +198,7 @@ def _lcm(it):
 	return curr_lcm
 
 
-def notedata_to_sm(data: NoteData) -> str:
+def notedata_to_sm(data: NoteData[str]) -> str:
 	measures_text: List[str] = []
 	EMPTY_ROW = '0' * len(data._notes[0].notes)
 
