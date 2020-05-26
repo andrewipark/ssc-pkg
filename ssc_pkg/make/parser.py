@@ -42,17 +42,24 @@ class Parser:
 	def _parse_Pragma(self, raw_command) -> commands.Pragma:
 		return commands.Pragma(p.parse_str(raw_command, ('pragma',)), raw_command.get('data', None))
 
-	def _parse_Group(self, raw_command) -> commands.Group:
-		return commands.Group(list(self.parse_commands(raw_command)))
+	def _parse_Group(self, raw_commands) -> commands.Group:
+		return commands.Group(list(self.parse_commands(raw_commands)))
+
+	def _parse_Group_h(self, what, indices, msg) -> commands.Group:
+		'''like the helper methods in parse.py,
+		but for parse errors, attach the string provided
+		(to make the structural relation of the error more obvious)
+		'''
+		what = p.parse_list(what, indices)
+		try:
+			return self._parse_Group(what)
+		except ParseError as e:
+			raise ParseError((indices,), str) from e
 
 	def _parse_Def(self, raw_command) -> commands.Def:
 		BODY_KEY = 'is'
 		name = p.parse_str(raw_command, ('def',))
-		try_body = p.parse_list(raw_command, (BODY_KEY,))
-		try:
-			body = self._parse_Group(try_body)
-		except ParseError as e:
-			raise ParseError(('<def>' + name,), 'error in function definition') from e
+		body = self._parse_Group_h(raw_command, (BODY_KEY,), 'definition of function body')
 		return commands.Def(name, body)
 
 	def _parse_Call(self, command) -> commands.Call:
@@ -69,8 +76,14 @@ class Parser:
 			else:
 				value = p.parse_variable(try_value, ())
 		except ParseError as e:
-			raise ParseError(('<let>' + name,), 'error in variable declaration') from e
+			raise ParseError((VALUE_KEY,), 'declaration value') from e
 		return commands.Let(name, value)
+
+	def _parse_For(self, raw_command) -> commands.For:
+		name = p.parse_str(raw_command, ('for',))
+		in_iterable = p.parse_list_type(raw_command, ('in',), p.parse_variable)
+		body = self._parse_Group_h(raw_command, ('do',), 'for-loop body')
+		return commands.For(name, in_iterable, body)
 
 	# type helpers
 
@@ -82,8 +95,9 @@ class Parser:
 			'def': self._parse_Def,
 			'call': self._parse_Call,
 			'let': self._parse_Let,
+			'for': self._parse_For,
 		}
-		no_recurse_obj = {'pragma', 'def', 'let'}
+		no_recurse_obj = {'pragma', 'def', 'let', 'for'}
 
 		for k in key_to_func:
 			if k in keys:

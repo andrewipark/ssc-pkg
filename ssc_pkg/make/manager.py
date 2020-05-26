@@ -84,12 +84,24 @@ class Manager:
 				f"variable '{call.name}' is not a function, but {type(what).__name__} instead"
 			)
 		try:
-			self._run_Group(what.group, simfile)
+			self._run_Group(what.body, simfile)
 		except CommandError as e:
 			raise CommandError(('<fn>' + call.name,), "error during function call") from e
 
 	def _run_Let(self, let: commands.Let, _: Simfile):
 		self.frames[-1].variables[let.name] = let.value
+
+	def _run_For(self, c_for: commands.For, simfile: Simfile):
+		for i, value in enumerate(c_for.in_iterable):
+			try:
+				# Each iteration gets its own scope, and we don't try to undo the group scope,
+				# so unlike Python, it is forbidden to reference dangling values from the last loop iteration
+				# this is implementation-defined and may change
+				with self:
+					self._run_Let(commands.Let(c_for.name, value), simfile)
+					self._run_Group(c_for.do_body, simfile)
+			except CommandError as e:
+				raise CommandError((i,), f"'{c_for.name}': {type(value).__name__} := {value}") from e
 
 	def run(self, command: commands.Command, simfile: Simfile):
 		'''run a command on the simfile, potentially modifying it in-place'''
@@ -100,6 +112,7 @@ class Manager:
 			commands.Def: self._run_Def,
 			commands.Call: self._run_Call,
 			commands.Let: self._run_Let,
+			commands.For: self._run_For,
 		}
 		# static type checking equivalent: Mapping[Type[_T], Callable[[_T, Simfile], None]]
 		# 'unbound type variable' :(

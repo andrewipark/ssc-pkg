@@ -85,13 +85,13 @@ class TestParser(unittest.TestCase):
 		result = self.parser.parse_command({'def': 'fn_name', 'is': [self.simple_pragma_obj]})
 		assert isinstance(result, c.Def)
 		self.assertEqual(result.name, 'fn_name')
-		self.assertEqual(result.group, c.Group([self.simple_pragma_cmd]))
+		self.assertEqual(result.body, c.Group([self.simple_pragma_cmd]))
 
 	def test_parse_Def_body(self):
 		self._test_parse_multi(
 			lambda b: {'def': 'another_name', 'is': b},
 			lambda e: c.Def('another_name', e),
-			lambda cm: cm.group,
+			lambda cm: cm.body,
 			c.Def
 		)
 
@@ -99,7 +99,7 @@ class TestParser(unittest.TestCase):
 		self._test_parse_multi(
 			lambda b: b,
 			lambda e: e,
-			lambda cm: cm.commands,
+			lambda cm: cm,
 			c.Group
 		)
 
@@ -127,6 +127,17 @@ class TestParser(unittest.TestCase):
 				self.parser.parse_command({'let': f'probably_a_{ex}', 'is': [orig] * 5}),
 				c.Let(f'probably_a_{ex}', [ex] * 5)
 			)
+
+	def test_parse_For(self):
+		pass # TODO currently handled by _For_Body
+
+	def test_parse_For_body(self):
+		self._test_parse_multi(
+			lambda b: {'for': 's', 'in': [4, 5, 2, 9], 'do': b},
+			lambda e: c.For('s', [4, 5, 2, 9], e),
+			lambda cm: cm.do_body,
+			c.For
+		)
 
 	# whole-picture tests
 

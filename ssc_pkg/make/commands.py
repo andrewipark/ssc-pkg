@@ -1,6 +1,6 @@
 '''Command data structures'''
 
-from typing import Any, Sequence
+from typing import Any, Iterable, Sequence
 
 import attr
 
@@ -37,7 +37,7 @@ class Group(Command):
 class Def(Command):
 	'''function definition'''
 	name: str
-	group: Group
+	body: Group
 
 
 @attr.s(auto_attribs=True)
@@ -51,3 +51,11 @@ class Let(Command):
 	'''variable definition (untyped)'''
 	name: str
 	value: Any
+
+
+@attr.s(auto_attribs=True)
+class For(Command):
+	'''indexed loop construct'''
+	name: str
+	in_iterable: Iterable[Any]
+	do_body: Group

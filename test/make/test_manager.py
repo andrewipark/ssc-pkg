@@ -24,6 +24,9 @@ class _LogExecContext:
 	def get_commands(self, o: Iterable) -> Sequence[c.Pragma]:
 		return [self.get_command(obj) for obj in o]
 
+	def get_lookup(self, name) -> c.Pragma:
+		return c.Pragma('callable', [lambda m: self.buf.append(m.lookup(name))])
+
 
 class TestManagerObj(unittest.TestCase):
 
@@ -140,3 +143,10 @@ class TestManagerObj(unittest.TestCase):
 
 		# no longer there outside group
 		self.assertEqual(self.manager.lookup(n), 1)
+
+	def test_run_for(self):
+		for_loop_iterable = list(range(8))
+
+		ctx = _LogExecContext()
+		self.mgr_run(c.For('i', for_loop_iterable, c.Group([ctx.get_lookup('i')])))
+		self.assertEqual(ctx.buf, for_loop_iterable)
