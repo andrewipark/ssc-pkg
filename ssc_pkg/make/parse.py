@@ -57,13 +57,17 @@ def parse_str(what, indices: util.IndexPath = ()) -> str:
 
 _FRACTION_REGEX = re.compile(
 	r'(?=.)' # don't match the empty string
-	r'(?:(?P<i>\d+))?'
-	r'(?:(?:^|\s+)(?P<fn>\d+)\s*/\s*(?P<fd>\d+))?'
+	r'(?P<s>\+|-)?' # sign
+	r'(?P<i>\d+)?' # integer
+	r'(?:' + (
+		r'(?(i)\s+)' # if there was an integer part, force whitespace
+		r'(?P<fn>\d+)\s*/\s*(?P<fd>\d+)' # fraction parts
+	) + r')?'
 )
 
 
 _CHARTPOINT_REGEX = re.compile(
-	r'(?P<cref>\d+)\s*@\s'
+	r'(?P<cref>\d+)\s*@\s*'
 	+ _FRACTION_REGEX.pattern
 )
 
@@ -72,6 +76,8 @@ def _parse_Fraction_match(m: re.Match) -> Fraction:
 	position = Fraction(m['i'] or 0)
 	if m['fn']:
 		position += Fraction(int(m['fn']), int(m['fd']))
+	if m['s']:
+		position *= -1
 	return position
 
 
