@@ -142,7 +142,7 @@ def _load_metatransform_data(transform_obj, target: Path, original: Path, max_de
 	except ImportError:
 		from yaml import Loader # type: ignore
 
-	with open(load_file_path) as f:
+	with open(load_file_path, encoding='utf-8') as f:
 		data = load(f, Loader = Loader)
 
 	# too bad if this file doesn't have what we want, even if another one does
