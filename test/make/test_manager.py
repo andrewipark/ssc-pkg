@@ -1,6 +1,6 @@
 import unittest
-from typing import ClassVar, Iterable, Mapping, Sequence
 from fractions import Fraction
+from typing import ClassVar, Iterable, Mapping, Sequence
 
 import attr
 

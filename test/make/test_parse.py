@@ -1,10 +1,11 @@
 import unittest
 from fractions import Fraction
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, Type
+
+import attr
 
 import ssc_pkg.make.parse as p
-
-from .test_parser import ErrorIndex
+from ssc_pkg.make.util import IndexPath, exc_index_trace
 
 
 EXAMPLE_OBJS: Mapping[type, Sequence[Any]] = { #
@@ -40,6 +41,28 @@ EXAMPLE_PARSE_FRACTIONS: Mapping[str, Fraction] = {
 	'333 1 / 2': Fraction(667, 2),
 }
 '''Things that should parse as fractions'''
+
+
+@attr.s(auto_attribs = True)
+class ErrorIndex:
+	test: unittest.TestCase
+	wrap_exc_type: Type[Exception]
+	root_exc_type: Type[Exception]
+	indices: IndexPath
+
+	def __enter__(self):
+		pass
+
+	def __exit__(self, exc_type, exc_value, _):
+		self.test.assertIsNotNone(exc_type, 'ParseError not raised')
+		e = exc_value
+		while e.__cause__ is not None:
+			self.test.assertIsInstance(e, self.wrap_exc_type)
+			e = e.__cause__
+		self.test.assertIsInstance(e, self.root_exc_type)
+		exc_indices: list = sum((p[0] for p in exc_index_trace(exc_value)), [])
+		self.test.assertEqual(exc_indices, self.indices)
+		return True
 
 
 def types_except(*types: type) -> Iterable[type]:
