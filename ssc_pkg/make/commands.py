@@ -53,6 +53,25 @@ class Copy(Command):
 	overlay_mode: NoteData.OverlayMode
 
 
+@attr.s(auto_attribs=True)
+class Erase(Command):
+	'''clear a note slice of notes'''
+	target: ChartRegion
+
+
+@attr.s(auto_attribs=True)
+class ColumnSwap(Command):
+	'''flip/mirror notes (w/ convenience aliases'''
+	target: ChartRegion
+	methods: Sequence[str]
+
+
+@attr.s(auto_attribs=True)
+class DeleteChart(Command):
+	'''delete a chart from the simfile'''
+	index: int
+
+
 # managed
 
 @attr.s(auto_attribs=True)

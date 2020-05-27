@@ -55,7 +55,7 @@ class TestManagerObj(unittest.TestCase):
 
 	# command run tests
 
-	# def test_run_copy(self): TODO
+	# none of the actions are tested
 
 	def test_run_pragma_echo(self):
 		collection = [

@@ -32,6 +32,22 @@ class Parser:
 			overlay_mode = mode,
 		)
 
+	def _parse_Erase(self, command):
+		return commands.Erase(
+			target = p.get(command, (), p.parse_ChartRegion),
+		)
+
+	def _parse_ColumnSwap(self, command):
+		return commands.ColumnSwap(
+			target = p.get(command, (), p.parse_ChartRegion),
+			methods = p.get_sequence(command, ('methods',), p.check_str),
+		)
+
+	def _parse_DeleteChart(self, command):
+		return commands.DeleteChart(
+			index = p.get(command, ('index',), p.check_int),
+		)
+
 	def _parse_Pragma(self, raw_command) -> commands.Pragma:
 		return commands.Pragma(
 			name = p.get(raw_command, ('pragma',), p.check_str),
@@ -90,6 +106,10 @@ class Parser:
 
 		key_to_func: Mapping[str, Callable[[Any], Command]] = {
 			'copy': self._parse_Copy,
+			'erase': self._parse_Erase,
+			'column_swap': self._parse_ColumnSwap,
+			'mirror': self._parse_ColumnSwap, # convenience alias
+			'delete_chart': self._parse_DeleteChart,
 
 			'pragma': self._parse_Pragma,
 			'def': self._parse_Def,

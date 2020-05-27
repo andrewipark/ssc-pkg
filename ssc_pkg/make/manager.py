@@ -2,7 +2,7 @@
 
 from fractions import Fraction
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Sequence, Type, TypeVar, Union, get_type_hints
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Type, TypeVar, Union, get_type_hints
 
 import attr
 
@@ -27,6 +27,42 @@ def _chart_from_index(simfile: Simfile, chart_index: int, indices) -> Chart:
 		return simfile.charts[chart_index]
 
 	raise CommandError(indices, f'no source chart at index {chart_index}')
+
+
+# this is not strictly manager related and could probably go somewhere else...
+
+_GAME_TYPE_COLUMNS_TABLE = {
+	'dance-single': 4,
+	'dance-double': 8,
+	'pump-single': 5,
+	'pump-double': 10,
+	# TODO a lot is missing
+}
+
+
+# curiously, mirroring "horizontally" means that the flip is actually across the vertical axis...
+_MIRROR_TRANSLATE_TABLE_PACKED = {
+	'dance-single': { # 0-3
+		('horizontal', 'horiz', 'h'): [3, 1, 2, 0],
+		('vertical', 'vert'): [0, 2, 1, 3],
+		('oblique',): [2, 3, 0, 1],
+		('antioblique',): [1, 0, 3, 2],
+	},
+	'pump-single': {
+		('horizontal', 'horiz', 'h'): [4, 3, 2, 1, 0],
+		('vertical', 'vert'): [1, 0, 2, 4, 3],
+		('oblique',): [0, 4, 2, 3, 1],
+		('antioblique',): [3, 1, 2, 0, 4],
+	},
+	# TODO: missing doubles and most other game modes
+}
+
+
+_MIRROR_TRANSLATE_TABLE = {
+	gt: {
+		k: v for ki, v in t.items() for k in ki
+	} for gt, t in _MIRROR_TRANSLATE_TABLE_PACKED.items()
+}
 
 
 @attr.s(auto_attribs=True)
@@ -117,7 +153,6 @@ class Manager:
 		for i, dv in enumerate(copy.targets):
 			try:
 				d = self.reduce_ChartPoint(dv)
-				print(d.position - src.start.position)
 				dest_chart = _chart_from_index(simfile, d.chart_index, ('target', i))
 				dest_chart.notes = dest_chart.notes.overlay(
 					source.shift(d.position - src.start.position),
@@ -126,7 +161,46 @@ class Manager:
 			except Exception as e:
 				raise CommandError((i,)) from e
 
-	def _run_Pragma(self, pragma: commands.Pragma, _: Simfile):
+	def _run_Erase(self, erase: commands.Erase, simfile: Simfile):
+		t = self.reduce_ChartRegion(erase.target)
+		target = _chart_from_index(simfile, t.start.chart_index, ('target',))
+		target.notes = target.notes.clear_range(
+			t.start.position,
+			t.start.position + t.length
+		)
+
+	def _run_ColumnSwap(self, column_swap: commands.ColumnSwap, simfile: Simfile):
+		target = self.reduce_ChartRegion(column_swap.target)
+		chart = _chart_from_index(simfile, target.start.chart_index, ('source'))
+		if chart.game_type not in _MIRROR_TRANSLATE_TABLE:
+			raise NotImplementedError(chart.game_type)
+		start = target.start.position
+		stop = start + target.length
+		notes_region = chart.notes[start:stop] # type: ignore # mypy-slice
+		if not notes_region:
+			self.logger.info(f'column_swap: chart {target.start.chart_index}, span {start} to {stop} is empty')
+			return
+
+		# calculate column recombination
+		columns = list(range(_GAME_TYPE_COLUMNS_TABLE[chart.game_type]))
+		for i, m in enumerate(column_swap.methods):
+			try:
+				translate_table = _MIRROR_TRANSLATE_TABLE[chart.game_type][m]
+			except KeyError:
+				raise CommandError((i,), f'unknown method: {m}') from None
+			columns = [columns[new_index] for new_index in translate_table]
+
+		# TODO: need a dedicated 'replace' command
+		chart.notes = chart.notes.overlay(
+			notes_region.column_swap(columns),
+			mode = notedata.NoteData.OverlayMode.KEEP_OTHER
+		)
+
+	def _run_DeleteChart(self, delete_chart: commands.DeleteChart, simfile: Simfile):
+		_chart_from_index(simfile, delete_chart.index, ('index',)) # index check
+		del simfile.charts[delete_chart.index]
+
+	def _run_Pragma(self, pragma: commands.Pragma, simfile: Simfile):
 		if pragma.name == 'echo':
 			self.logger.info(f'{pragma.data}')
 		elif pragma.name == 'vars':
@@ -139,6 +213,9 @@ class Manager:
 			cmd, args = pragma.data[0], pragma.data[1:]
 			result = cmd(self, *args)
 			self.logger.debug(f'callable pragma with args:\n{args}\nreturned:\n{result}')
+		elif pragma.name == 'labels_as_vars':
+			for t, l in simfile.timing_data.labels.items():
+				self._run_Let(commands.Let(l, Fraction(t)), simfile)
 		else:
 			raise CommandError((), f"unknown pragma '{pragma.name}'")
 
@@ -185,6 +262,9 @@ class Manager:
 
 		cmd_type_fn: Mapping[type, Callable[[Any, Simfile], None]] = {
 			commands.Copy: self._run_Copy,
+			commands.Erase: self._run_Erase,
+			commands.ColumnSwap: self._run_ColumnSwap,
+			commands.DeleteChart: self._run_DeleteChart,
 
 			commands.Pragma: self._run_Pragma,
 			commands.Group: self._run_Group,
