@@ -5,14 +5,14 @@ from typing import Any, Hashable, Iterable, Sequence, Tuple, Type
 import attr
 
 import ssc_pkg.make.commands as c
-from ssc_pkg.make.parser import ParseError, Parser
+from ssc_pkg.make.parser import Parser
 from ssc_pkg.make.util import exc_index_trace
 
 
 @attr.s(auto_attribs = True)
 class ErrorIndex:
 	test: unittest.TestCase
-	wanted_exc_type: Type[Exception]
+	wanted_root_exc_type: Type[Exception]
 	indices: list
 
 	def __enter__(self):
@@ -20,7 +20,10 @@ class ErrorIndex:
 
 	def __exit__(self, exc_type, exc_value, _):
 		self.test.assertIsNotNone(exc_type, 'ParseError not raised')
-		self.test.assertIs(exc_type, self.wanted_exc_type)
+		e = exc_value
+		while e.__cause__ is not None:
+			e = e.__cause__
+		self.test.assertIsInstance(e, self.wanted_root_exc_type)
 		exc_indices: list = sum((p[0] for p in exc_index_trace(exc_value)), [])
 		self.test.assertEqual(exc_indices, self.indices)
 		return True
@@ -75,9 +78,9 @@ class TestParser(unittest.TestCase):
 			c.Pragma('blah blah blah', ['blah', 'blah 2'])
 		)
 
-		with ErrorIndex(self, ParseError, ['pragma']):
+		with ErrorIndex(self, TypeError, ['pragma']):
 			self.parser.parse_command({'pragma': None})
-		with ErrorIndex(self, ParseError, ['pragma']):
+		with ErrorIndex(self, TypeError, ['pragma']):
 			self.parser.parse_command({'pragma': None, 'data': obj})
 		# TODO pragma type must be string
 
@@ -152,4 +155,4 @@ class TestParser(unittest.TestCase):
 			attr, # the module object... yes, seriously
 		]
 		for bad in collection:
-			self.assertRaises(ParseError, lambda _: self.parser.parse_command(bad), str(bad))
+			self.assertRaises(TypeError, lambda _: self.parser.parse_command(bad), str(bad))

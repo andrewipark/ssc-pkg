@@ -14,40 +14,43 @@ VarValue = Union[Scalar, Sequence[Scalar]]
 def exc_index_trace(e: Exception):
 	'''Generates neat traceback stacks from exceptions containing index data
 
-	For each exception,
+	The root, innermost exception may be anything.
+	For the other outer exceptions,
 	``args[0]`` MUST be a (possibly empty) sequence of indices.
-	Everything else is interpreted as part of a message.
+	To avoid inadvertently swallowing unhandled exceptions,
+	the types of the exceptions must be the same.
 
 	This collapses index sequences with empty messages.
-
-	To avoid inadvertently swallowing unhandled exceptions,
-	the types of all exceptions must be the same.
 	'''
 
 	exc_pairs: List[Tuple[list, Optional[str]]] = []
 	curr_exc: Optional[BaseException] = e
-
 	exc_type = type(e)
 
 	while curr_exc:
 		curr_index: list = []
 		msg: Optional[str] = None
 
-		if not isinstance(e, exc_type):
-			raise TypeError(f'unexpected {type(e)} in {exc_type} chain')
-
 		args = curr_exc.args
-		if not args:
-			raise ValueError('missing context')
-		if (not isinstance(args[0], Sequence)) or isinstance(args[0], str):
-			raise TypeError(f'invalid context: {args[0]}')
+		supports_context = args and isinstance(args[0], Sequence) and (not isinstance(args[0], str))
+		is_last = curr_exc.__cause__ is None
 
-		curr_index = list(args[0])
+		if not is_last:
+			if type(curr_exc) is not exc_type:
+				raise curr_exc # not handled properly
+			if not supports_context:
+				raise TypeError(f'bad context: {args}')
 
-		if len(args) == 2:
-			msg = str(args[1])
-		elif len(args) > 2:
-			msg = str(args[1:])
+		if supports_context:
+			curr_index = list(args[0])
+			if len(args) == 2:
+				msg = str(args[1])
+			elif len(args) > 2:
+				msg = str(args[1:])
+		else:
+			msg = type(curr_exc).__name__
+			if (m := str(curr_exc)):
+				msg += ': ' + m
 
 		if (not exc_pairs) or (exc_pairs[-1][1]):
 			exc_pairs.append((curr_index, msg))
