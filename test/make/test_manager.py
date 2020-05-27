@@ -64,7 +64,7 @@ class TestManagerObj(unittest.TestCase):
 			self.assertIn(v, ''.join(lm.output))
 
 	def test_run_pragma_raise(self):
-		with ErrorIndex(self, CommandError, ['Pragma']):
+		with ErrorIndex(self, CommandError, CommandError, ['Pragma']):
 			self.mgr_run(c.Pragma('raise', None))
 
 	def test_run_pragma_callable(self):
@@ -74,7 +74,8 @@ class TestManagerObj(unittest.TestCase):
 		self.assertEqual(ctx.buf, [666666])
 
 	def test_run_pragma_invalid(self):
-		self.assertRaises(CommandError, lambda: self.mgr_run(c.Pragma('NO', None)))
+		with ErrorIndex(self, CommandError, CommandError, ['Pragma']):
+			self.mgr_run(c.Pragma('NO', None))
 
 	def test_run_group(self):
 		ctx_single = _LogExecContext()
@@ -112,13 +113,13 @@ class TestManagerObj(unittest.TestCase):
 
 		self.mgr_run(define_blah)
 		self.mgr_run(c.Call('blah'))
-		with ErrorIndex(self, CommandError, ['Call']):
+		with ErrorIndex(self, CommandError, CommandError, ['Call']):
 			self.mgr_run(c.Call('blah2')) # not visible from outside 'blah'
 
 	def test_run_call_invalid(self):
-		with ErrorIndex(self, CommandError, ['Call']):
+		with ErrorIndex(self, CommandError, CommandError, ['Call']):
 			self.mgr_run(c.Call('not_existent_yet'))
-		with ErrorIndex(self, CommandError, ['Call']):
+		with ErrorIndex(self, CommandError, CommandError, ['Call']):
 			self.mgr_run(c.Call('might_exist'))
 
 		self.mgr_run(c.Def('might_exist', c.Group([])))

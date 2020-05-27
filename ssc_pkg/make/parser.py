@@ -1,38 +1,12 @@
 '''reference parsing code for make'''
 
-from typing import Any, Callable, Iterable, Iterator, List, Mapping, Sequence, Tuple
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from . import commands
 from . import parse as p
 from .commands import Command
 from .parse import ParseError
 from .util import VarValue
-
-
-# unused
-# utility-fn
-def _enum_flatten_list(obj: Iterable) -> Iterable[Tuple[List[int], Any]]:
-	'''An enumerate that flattens the list along the way'''
-
-	stack: List[Iterator] = [iter(obj)]
-	indices: List[int] = [0]
-
-	while stack:
-		curr: Any = stack[-1]
-
-		try:
-			curr = next(curr)
-		except StopIteration:
-			stack.pop()
-			indices.pop()
-			continue
-
-		if isinstance(curr, Iterable) and (not isinstance(curr, (str, Mapping))):
-			stack.append(iter(curr))
-			indices.append(0)
-		else:
-			yield indices, curr
-			indices[-1] += 1
 
 
 class Parser:

@@ -63,6 +63,9 @@ def check_int(what) -> int:
 
 
 def check_str(what, indices: util.IndexPath = ()) -> str:
+	'''Because Python 3's :obj:`int` is unlimited size,
+	we can assume that YAML strings never represent an :obj:`int`
+	'''
 	if not isinstance(what, str):
 		raise TypeError(f"expected a string, got {type(what).__name__} instead: {what}")
 	return what
@@ -94,7 +97,7 @@ def check_sequence_type(what, check: Callable[[Any], _T]) -> Sequence[_T]:
 
 FRACTION_REGEX = re.compile(
 	r'(?=.)' # don't match the empty string
-	r'(?P<s>\+|-)?' # sign
+	r'(?:(?P<s>\+|-)\s*)?' # sign
 	r'(?P<i>\d+)?' # integer
 	r'(?:' + (
 		r'(?(i)\s+)' # if there was an integer part, force whitespace
@@ -115,7 +118,7 @@ def _match_to_Fraction(m: re.Match) -> Fraction:
 	position = Fraction(m['i'] or 0)
 	if m['fn']:
 		position += Fraction(int(m['fn']), int(m['fd']))
-	if m['s']:
+	if m['s'] == '-':
 		position *= -1
 	return position
 
@@ -135,7 +138,10 @@ def parse_Fraction(what) -> Fraction:
 
 
 def parse_scalar(what) -> util.Scalar:
-	'''parse the contents as an ``int``, ``Fraction``, and ``str``, in that order of priority'''
+	'''parse the contents as an ``int``, ``Fraction``, and ``str``, in that order of priority
+
+	|WARNING| experimental
+	'''
 	if isinstance(what, int):
 		return what
 	if isinstance(what, str):
