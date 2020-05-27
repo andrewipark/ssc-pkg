@@ -1,13 +1,13 @@
 '''context manager and command line runner'''
 
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Mapping, get_type_hints
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Union, get_type_hints
 
 import attr
 
 from ssc_pkg.simfile import Simfile
 
-from . import commands
+from . import commands, util
 
 
 class CommandError(Exception):
@@ -21,7 +21,7 @@ class CommandError(Exception):
 class _Context:
 	'''The equivalent of a stack frame for the manager'''
 
-	variables: Dict[str, Any] = attr.Factory(dict)
+	variables: Dict[str, Union[util.VarValue, commands.Def]] = attr.Factory(dict)
 
 
 @attr.s(auto_attribs=True)

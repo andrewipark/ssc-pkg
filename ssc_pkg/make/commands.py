@@ -4,6 +4,8 @@ from typing import Any, Iterable, Sequence
 
 import attr
 
+from . import util
+
 
 class Command:
 	'''mixin for type support w/ ``mypy``'''
@@ -50,12 +52,12 @@ class Call(Command):
 class Let(Command):
 	'''variable definition (untyped)'''
 	name: str
-	value: Any
+	value: util.VarValue
 
 
 @attr.s(auto_attribs=True)
 class For(Command):
 	'''indexed loop construct'''
 	name: str
-	in_iterable: Iterable[Any]
+	in_iterable: Iterable[util.Scalar]
 	body: Group

@@ -31,14 +31,24 @@ def get(what, indices: util.IndexPath = ()):
 
 	argument descriptions here apply to all of the other module methods
 	'''
-	if indices:
-		for ii, i in enumerate(indices):
-			try:
-				what = what[i]
-			except (IndexError, KeyError) as e:
-				# we can make the error message more obvious
-				raise ParseError(indices[:ii], f'key {indices[ii]} missing ({type(e).__name__})') from None
+	for ii, i in enumerate(indices):
+		try:
+			what = what[i]
+		except (IndexError, KeyError):
+			# we can make the error message more obvious
+			raise ParseError(indices[:ii], f'key {indices[ii]} missing') from None
+		except TypeError:
+			raise ParseError(indices[:ii], f'{type(what).__name__} is not indexable') from None
 	return what
+
+
+def has(what, indices: util.IndexPath = ()):
+	for i in indices:
+		try:
+			what = what[i]
+		except (TypeError, IndexError, KeyError):
+			return False
+	return True
 
 
 def parse_int(what, indices: util.IndexPath = ()) -> int:
@@ -94,7 +104,7 @@ def parse_Fraction(what, indices: util.IndexPath = ()) -> Fraction:
 	raise ParseError(indices, f"expected a fraction, got '{type(what).__name__}' instead")
 
 
-def parse_variable(what, indices: util.IndexPath = ()):
+def parse_scalar(what, indices: util.IndexPath = ()) -> util.Scalar:
 	'''parse the contents as an ``int``, ``Fraction``, and ``str``, in that order of priority'''
 	what = get(what, indices)
 	if isinstance(what, int):

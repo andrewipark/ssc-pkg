@@ -1,9 +1,14 @@
 '''miscellaneous functions that defy categorization'''
 
 from typing import List, Optional, Sequence, Tuple, Union
+from fractions import Fraction
 
 
 IndexPath = Sequence[Union[int, str]]
+
+Scalar = Union[int, Fraction, str]
+
+VarValue = Union[Scalar, Sequence[Scalar]]
 
 
 def exc_index_trace(e: Exception):

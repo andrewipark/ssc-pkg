@@ -1,11 +1,12 @@
 import unittest
-from typing import ClassVar, Iterable, Sequence
+from typing import ClassVar, Iterable, Mapping, Sequence
 from fractions import Fraction
 
 import attr
 
 import ssc_pkg.make.commands as c
 from ssc_pkg.make.manager import CommandError, Manager
+from ssc_pkg.make.util import VarValue
 from ssc_pkg.simfile import Simfile
 
 from .test_parser import ErrorIndex
@@ -124,11 +125,10 @@ class TestManagerObj(unittest.TestCase):
 		self.mgr_run(c.Call('might_exist'))
 
 	def test_run_let(self):
-		value_test = {
+		value_test: Mapping[str, VarValue] = {
 			'a_variable': 35,
 			'a_list': [3, 5, 20],
-			'a_mapping': {'a': 3, 'b': 63},
-			'a_None': None,
+			# 'a_mapping': {'a': 3, 'b': 63},
 			'a_Fraction': Fraction(42069, 17),
 		}
 

@@ -6,6 +6,7 @@ from . import commands
 from . import parse as p
 from .commands import Command
 from .parse import ParseError
+from .util import VarValue
 
 
 # unused
@@ -72,12 +73,13 @@ class Parser:
 		VALUE_KEY = 'is'
 		name = p.parse_str(raw_command, ('let',))
 		try_value = p.get(raw_command, (VALUE_KEY,))
+		value: VarValue
 		# only supports scalars and lists right now
 		try:
 			if not isinstance(try_value, str) and isinstance(try_value, Sequence):
-				value = p.parse_list_type(try_value, (), p.parse_variable)
+				value = p.parse_list_type(try_value, (), p.parse_scalar)
 			else:
-				value = p.parse_variable(try_value, ())
+				value = p.parse_scalar(try_value, ())
 		except ParseError as e:
 			raise ParseError((VALUE_KEY,), 'declaration value') from e
 		return commands.Let(name = name, value = value)
@@ -85,7 +87,7 @@ class Parser:
 	def _parse_For(self, raw_command) -> commands.For:
 		return commands.For(
 			name = p.parse_str(raw_command, ('for',)),
-			in_iterable = p.parse_list_type(raw_command, ('in',), p.parse_variable),
+			in_iterable = p.parse_list_type(raw_command, ('in',), p.parse_scalar),
 			body = self._parse_Group_h(raw_command, ('do',), 'for-loop body'),
 		)
 
