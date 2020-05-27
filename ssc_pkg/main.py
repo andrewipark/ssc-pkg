@@ -7,6 +7,7 @@ import re
 import shutil
 from collections import deque
 from pathlib import Path
+from time import perf_counter_ns
 from typing import Any, Callable, Iterable, List, Optional
 
 from . import simfile, transforms
@@ -100,7 +101,7 @@ def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
 
 
 def _run_copy(args, files):
-	logging.debug(f'copy: {len(files)} objects')
+	time_original = perf_counter_ns()
 
 	try:
 		args.output_dir.mkdir(parents=True)
@@ -113,6 +114,9 @@ def _run_copy(args, files):
 			shutil.copy(path, dest)
 		elif path.is_dir():
 			dest.mkdir(exist_ok=True)
+
+	time_elapsed = perf_counter_ns() - time_original
+	logging.info(f"copied {len(files)} objects in {time_elapsed // 1000000} ms")
 
 
 def _load_metatransform_data(transform_obj, target: Path, original: Path, max_depth: int = 8):
@@ -183,6 +187,8 @@ def _run_transform_obj(
 def _run_transform_action(transform_obj, target: Path, original: Path):
 	'''Run the provided transform with the paths provided'''
 
+	time_original = perf_counter_ns()
+
 	# load
 	# NOTE it might be faster not to load very large simfiles
 	# with FileTransform impls that ignore the object anyways...
@@ -207,9 +213,14 @@ def _run_transform_action(transform_obj, target: Path, original: Path):
 	if isinstance(transform_obj, abc.Cleanable):
 		transform_obj.clean()
 
+	time_elapsed = perf_counter_ns() - time_original
+	transform_obj.logger.debug(f"transformed '{target}' in {time_elapsed // 1000000} ms")
+
 
 def _run_transform(args, simfiles):
-	logging.debug(f'transform: {len(simfiles)} simfiles')
+	'''Run some transforms over all simfiles'''
+
+	time_original = perf_counter_ns()
 
 	simfiles_generated = [(args.output_dir / (s.relative_to(args.input_dir)), s) for s in simfiles]
 	# t[1] is original
@@ -223,12 +234,20 @@ def _run_transform(args, simfiles):
 			logging.error(f"unknown transform '{t}' at index {i}")
 
 	for target, original in simfiles_generated:
+		time_original_curr = perf_counter_ns()
+
 		for tobj in transform_objs:
 			try:
 				_run_transform_action(tobj, target, original)
 			except Exception:
 				logging.error(f"transform '{type(tobj).__name__}' failed on simfile '{target}'")
 				raise
+
+		time_elapsed = perf_counter_ns() - time_original_curr
+		logging.debug(f"ran all transforms on {target} in {time_elapsed // 1000000} ms")
+
+	time_elapsed = perf_counter_ns() - time_original
+	logging.info(f"finished transform on {len(simfiles)} simfiles in {time_elapsed // 1000000} ms")
 
 
 def run(args):
