@@ -1,19 +1,33 @@
+'''Represents raw notedata.
+
+:const:`Position` is the canonical type for representing the time position of notes.
+'''
+
 from enum import Enum, auto
 from fractions import Fraction
 from itertools import chain, groupby
 from math import gcd
+from numbers import Rational
 from typing import Generic, Iterable, List, Sequence, Union, TypeVar, overload
 
 import attr
 
 
-_NotePosition = Fraction
-_NoteType = TypeVar('_NoteType', str, Sequence)
+Position = Fraction
+# NOTE blocked : no docstring here because Sphinx sees the alias and eats whatever I put here
+
+NoteType = TypeVar('NoteType', bound=Sequence)
 
 
 # NOTE blocked https://github.com/python/mypy/issues/3186
 # mypy doesn't work with numbers tower, so we have to write out types explicitly
-_NotePosSafe = Union[_NotePosition, int]
+PositionSafe = Union[Position, int, Rational]
+'''Describes the types that are compatible with :const:`Position`.
+
+Arithmetic operations with mixed :const:`PositionSafe` types will produce a result
+of either :const:`PositionSafe` type, or :const:`Position`, and do not lose precision.
+The latter precludes ``float``.
+'''
 
 
 _SM_TEXT_BEATS_PER_MEASURE = 4 # regardless of time signature data elsewhere
@@ -22,15 +36,17 @@ _SM_TEXT_MEASURE_SEP = ','
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class DensityInfo:
-	delta: _NotePosition
+	delta: Position
+	'''The amount of time between two notes'''
 	count: int
+	'''The number of consecutive instances where the time between two notes is :attr:`delta`'''
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
-class _NoteRow(Generic[_NoteType]):
-	position: _NotePosition # = attr.ib(converter=Fraction)
+class _NoteRow(Generic[NoteType]):
+	position: Position # = attr.ib(converter=Fraction)
 	# causes slowdown, and caller should know better anyways?
-	notes: _NoteType
+	notes: NoteType
 
 
 # NOTE blocked https://github.com/python/mypy/issues/7912 should be internal @classmethod
@@ -39,8 +55,10 @@ def _normalize_notes(notes_list: Iterable[_NoteRow]) -> List[_NoteRow]:
 
 
 @attr.s(auto_attribs=True, frozen=True)
-class NoteData(Generic[_NoteType]):
-	'''Class representing note data of a simfile. Data is stored by row.
+class NoteData(Generic[NoteType]):
+	'''Immutable collection of notes with time positions.
+
+	In this implementation, data is stored by row.
 
 	This is intended as a container class and doesn't store nor handle
 	semantic data about what notes actually mean.
@@ -58,7 +76,7 @@ class NoteData(Generic[_NoteType]):
 				raise IndexError(f'rows {i-1} and {i} have identical position {prev.position}')
 
 	# all the notes stored by this object, in [beat: notes] form
-	_notes: List[_NoteRow[_NoteType]] = attr.ib(
+	_notes: List[_NoteRow[NoteType]] = attr.ib(
 		factory=list, converter=_normalize_notes, validator=__validate_notes
 	)
 
@@ -68,7 +86,7 @@ class NoteData(Generic[_NoteType]):
 		'''Return the number of note rows'''
 		return len(self._notes)
 
-	def __index_of_row(self, position: _NotePosSafe) -> int:
+	def __index_of_row(self, position: PositionSafe) -> int:
 		'''Return n s.t. _notes[n].position = position, or insert location if absent'''
 		lo, hi = 0, len(self._notes)
 		while lo < hi:
@@ -79,21 +97,21 @@ class NoteData(Generic[_NoteType]):
 				hi = c
 		return lo
 
-	def __index_of_row_must_exist(self, position: _NotePosSafe) -> int:
+	def __index_of_row_must_exist(self, position: PositionSafe) -> int:
 		i = self.__index_of_row(position)
 		if self._notes[i].position != position:
 			raise IndexError
 		return i
 
-	def __contains__(self, position: _NotePosSafe) -> bool:
+	def __contains__(self, position: PositionSafe) -> bool:
 		i = self.__index_of_row(position)
 		return (i < len(self._notes)) and (self._notes[i].position == position)
 
 	@overload
-	def __getitem__(self, key: slice) -> 'NoteData[_NoteType]':
+	def __getitem__(self, key: slice) -> 'NoteData[NoteType]':
 		'''Slice the notedata at the given boundaries, and return a contiguous subset'''
 	@overload
-	def __getitem__(self, key: _NotePosSafe) -> _NoteType:
+	def __getitem__(self, key: PositionSafe) -> NoteType:
 		'''Return the note at a given beat'''
 
 	def __getitem__(self, key):
@@ -115,34 +133,37 @@ class NoteData(Generic[_NoteType]):
 
 		return self._notes[self.__index_of_row_must_exist(key)].notes
 
-	def __delta_generator(self):
+	def __delta_generator(self) -> Iterable[Position]:
+		# TODO this can be public API
 		i = 1
 		while i < len(self._notes):
 			yield self._notes[i].position - self._notes[i - 1].position
 			i += 1
 
 	def density(self) -> Iterable[DensityInfo]:
-		'''Return the density of the note data'''
+		# TODO docstring
 		return [DensityInfo(k, sum(1 for _ in g)) for k, g in groupby(self.__delta_generator())]
 
 	# mutation
 
-	def shift(self, amount: _NotePosSafe) -> 'NoteData[_NoteType]':
-		'''Shift all the notes by a given amount in time'''
+	def shift(self, amount: PositionSafe) -> 'NoteData[NoteType]':
+		'''Shift the positions of this container's notes'''
 		return attr.evolve(self, notes = [_NoteRow(r.position + amount, r.notes) for r in self._notes])
 
-	def clear_range(self, start: _NotePosSafe, stop: _NotePosSafe) -> 'NoteData[_NoteType]':
-		'''Removes all the notes in the specified half-open range [start, stop)'''
+	def clear_range(self, start: PositionSafe, stop: PositionSafe) -> 'NoteData[NoteType]':
+		'''Remove all notes in the specified half-open range'''
 		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
 		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
 
 	class OverlayMode(Enum):
+		'''Strategies for :meth:`overlay` when both containers have notes at the same position'''
 		KEEP_SELF = auto()
 		KEEP_OTHER = auto()
 		RAISE = auto()
+		'''Specifically raises :exc:`IndexError`'''
 
-	def overlay(self, other: 'NoteData[_NoteType]', mode: OverlayMode = OverlayMode.RAISE) -> 'NoteData[_NoteType]':
-		'''Overlay another NoteData object onto this one'''
+	def overlay(self, other: 'NoteData[NoteType]', mode: OverlayMode = OverlayMode.RAISE) -> 'NoteData[NoteType]':
+		'''Overlay notes onto the ones in this container'''
 
 		if mode == self.OverlayMode.RAISE:
 			return attr.evolve(self, notes = chain(self._notes, other._notes))

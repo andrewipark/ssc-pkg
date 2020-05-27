@@ -38,12 +38,12 @@ class TestNoteDataSimple(unittest.TestCase):
 			'0000\n1111\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n'
 			'0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n0000\n'
 		)
-		self.simple = notedata.NoteData(self.simple_notes)
+		self.simple: notedata.NoteData[str] = notedata.NoteData(self.simple_notes)
 		self.simple_beyond = 25
 
 		self.long_jack_interval = Fraction(3, 4)
 		self.long_jack_length = 100
-		self.long_jack = notedata.NoteData(
+		self.long_jack: notedata.NoteData[str] = notedata.NoteData(
 			notedata._NoteRow(self.long_jack_interval * i, '0101')
 			for i in range(self.long_jack_length)
 		)
@@ -126,8 +126,8 @@ class TestNoteDataSimple(unittest.TestCase):
 		)
 
 	def test_density_degenerate(self):
-		zero = notedata.NoteData()
-		single = notedata.NoteData([notedata._NoteRow(Fraction(1, 7), '')])
+		zero: notedata.NoteData = notedata.NoteData()
+		single: notedata.NoteData = notedata.NoteData([notedata._NoteRow(Fraction(1, 7), '')])
 		self.assertEqual(len(list(zero.density())), 0)
 		self.assertEqual(len(list(single.density())), 0)
 
