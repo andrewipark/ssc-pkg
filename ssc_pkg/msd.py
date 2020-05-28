@@ -49,17 +49,19 @@ def text_to_msd(text: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C
 
 	NOTE Iterable[str] is provided for convenience with file objects.
 
-	NOTE This parser is stricter than SM `/src/MsdFile.cpp`
-	* All items must start at the beginning of lines.
-	* Unclosed items will cause undefined behavior.
-	(SM rstrips the text and soldiers on; this is too complex to replicate.)
-	* Backslash escapes are not supported.
-	Behavior seems to vary across products:
-		AV ignores the backslash
-		SM 3.9 doesn't support it at all
-		SM5 parses it to... something.
+	NOTE This parser is stricter than SM ``/src/MsdFile.cpp``:
 
-	we should try regex or some such...
+	-	All items must start at the beginning of lines.
+	-	Unclosed items will cause undefined behavior.
+		(SM rstrips the text and soldiers on; this is too complex to replicate.)
+	-	Backslash escapes are not supported.
+		Behavior seems to vary across products:
+
+		- AV ignores the backslash
+		- SM3.9 doesn't support it at all
+		- SM5 interprets them in standard fashion, so ``\\t`` becomes an actual tab character
+
+	Maybe a regex-based solution would be easier to maintain than this behemoth
 	'''
 	if isinstance(text, str):
 		text = text.splitlines(keepends = True)
@@ -141,8 +143,6 @@ def attrs_obj_to_msd(
 		= lambda name, value_type, value: value is not None,
 ) -> Iterable[MSDItem]:
 	'''Convert an attrs object to MSD items
-
-	filterer: omits fields from MSD output if the return value is False
 
 	MSD is inherently a flat structure, so callers should only use this function on flat/POD objects.
 	'''

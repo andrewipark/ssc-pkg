@@ -156,7 +156,7 @@ class NoteData(Generic[NoteType]):
 		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
 
 	class OverlayMode(Enum):
-		'''Strategies for :meth:`overlay` when both containers have notes at the same position'''
+		'''Strategies for :meth:`NoteData.overlay` when both containers have notes at the same position'''
 		KEEP_SELF = auto()
 		KEEP_OTHER = auto()
 		RAISE = auto()

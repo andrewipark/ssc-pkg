@@ -40,11 +40,21 @@ def _chart_str(chart: simfile.Chart) -> str:
 
 
 class OggConvert(abc.FileTransform, abc.Cleanable):
-	'''Convert the audio to Ogg Vorbis, the optimal format for Stepmania'''
+	'''Convert the simfile audio to Ogg Vorbis, the optimal format for Stepmania'''
 
 	old_music: Optional[Path]
 
 	def transform(self, sim: simfile.Simfile, target: Path) -> Optional[simfile.Simfile]:
+		'''Convert the simfile audio and update the paths in the simfile,
+		except if the audio is already in Ogg Vorbis format.
+
+		This re-encoding is not recommended for already non-lossless audio,
+		e.g. MP3 files, but since this operates on a copy of the files,
+		at least no audio quality is permanently lost.
+
+		Raises:
+			FileNotFoundError: ``oggenc`` is not available
+		'''
 		# tons of preconditions
 		self.old_music = None
 
@@ -70,8 +80,10 @@ class OggConvert(abc.FileTransform, abc.Cleanable):
 			subprocess.run(["oggenc", "--quality=8", str(old_music)], capture_output=True, check=True)
 		except subprocess.CalledProcessError as exc:
 			self.logger.error(f'oggenc failed with return code {exc.returncode} and stderr as follows:\n{exc.stderr}')
+			raise
 		except FileNotFoundError:
 			self.logger.error('oggenc unavailable')
+			raise
 
 		sim.music = sim.music.parent / (sim.music.stem + '.ogg')
 		self.old_music = old_music
@@ -100,11 +112,13 @@ class OggConvert(abc.FileTransform, abc.Cleanable):
 
 class Nothing(abc.SimfileTransform):
 	def transform(self, sim: simfile.Simfile) -> None:
+		'''does nothing (significant)'''
 		self.logger.debug('nothing happened')
 
 
 class DemoMeta(abc.MetaTransform):
 	def transform(self, _, target: Path, obj) -> None:
+		'''does nothing (significant)'''
 		try:
 			self.logger.debug(f"metadata keys for '{target}': {obj.keys()}")
 		except AttributeError:
@@ -112,9 +126,8 @@ class DemoMeta(abc.MetaTransform):
 
 
 class NameRegex(abc.FileTransform):
-	'''Check that filenames exactly match given regex.'''
-
 	def transform(self, _, target: Path):
+		'''Check that all file names in the folder exactly match regex.'''
 		# TODO customizable?
 		regex: re.Pattern = re.compile(r'[a-z0-9\-_.]*')
 
@@ -134,12 +147,12 @@ class NameRegex(abc.FileTransform):
 
 
 class NeatOffset(abc.SimfileTransform):
-	'''Check that the offset value is an exact multiple of one second
-
-	This makes it easy to tell at a glance whether the ITG offset was applied or not,
-	and if that is done automatically, this transform should be earlier.
-	'''
 	def transform(self, sim: simfile.Simfile) -> None:
+		'''Check that the offset value is an exact multiple of one second
+
+		This makes it easy to tell at a glance whether the ITG offset was applied or not,
+		and if that is done automatically, this transform should be earlier.
+		'''
 		if sim.timing_data.offset % 1 != 0:
 			self.logger.warning(
 				f"simfile offset {sim.timing_data.offset} is messy"
