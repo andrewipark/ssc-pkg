@@ -2,12 +2,12 @@
 
 from fractions import Fraction
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Mapping, TypeVar, Type, Union, get_type_hints
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Type, TypeVar, Union, get_type_hints
 
 import attr
 
-from ssc_pkg.simfile import Simfile, Chart
 from ssc_pkg import notedata
+from ssc_pkg.simfile import Chart, Simfile
 
 from . import commands
 
@@ -40,12 +40,14 @@ class _Context:
 
 @attr.s(auto_attribs=True)
 class ChartPoint:
+	'''concrete version of :class:`~.commands.ChartPoint`'''
 	chart_index: int
 	position: notedata.Position
 
 
 @attr.s(auto_attribs=True)
 class ChartRegion:
+	'''concrete version of :class:`~.commands.ChartRegion`'''
 	start: ChartPoint
 	length: notedata.Position
 
@@ -63,9 +65,6 @@ class Manager:
 			if name in frame.variables:
 				return frame.variables[name]
 		raise KeyError(name)
-
-	def has(self, name: str):
-		return any(name in f.variables for f in self.frames)
 
 	def lookup_typed(self, name: str, t: Type[_T]) -> _T:
 		'''convenience lookup function with guaranteed return type (caveat: generic subscripting)'''
@@ -87,6 +86,7 @@ class Manager:
 		return what
 
 	def reduce_ChartPoint(self, chart_point: commands.ChartPoint) -> ChartPoint:
+		'''resolves all variable references in a :class:`~.commands.ChartPoint`'''
 		base = self.lookup_typed(chart_point.base.name, Fraction) if chart_point.base else Fraction(0)
 		return ChartPoint(
 			chart_index = self.resolve(chart_point.chart_index, int),
@@ -94,6 +94,7 @@ class Manager:
 		)
 
 	def reduce_ChartRegion(self, chart_region: commands.ChartRegion) -> ChartRegion:
+		'''resolves all variable references in a :class:`~.commands.ChartRegion`'''
 		return ChartRegion(
 			start = self.reduce_ChartPoint(chart_region.start),
 			length = self.resolve(chart_region.length, Fraction),
@@ -205,11 +206,7 @@ class Manager:
 				if ct is commands.Group or ct is commands.Call:
 					# these are structural, we don't care about the name
 					raise e
-				raise CommandError((ct.__name__, )) from e
-			except Exception:
-				# print out whatever failed since it may not be obvious from stack trace
-				print(command)
-				raise
+				raise CommandError((ct.__name__,)) from e
 
 		else:
 			raise CommandError((), f"unhandled command '{command}'")

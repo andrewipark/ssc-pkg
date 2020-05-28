@@ -2,12 +2,12 @@
 
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
+from ssc_pkg import notedata
+
 from . import commands
 from . import parse as p
 from .commands import Command, VarValue
 from .parse import ParseError
-
-from ssc_pkg import notedata
 
 
 class Parser:

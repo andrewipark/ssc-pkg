@@ -1,7 +1,7 @@
 '''Command data structures'''
 
-from typing import Any, Iterable, Sequence, Union, Optional
 from fractions import Fraction
+from typing import Any, Iterable, Optional, Sequence, Union
 
 import attr
 
@@ -22,7 +22,7 @@ class VarRef:
 
 @attr.s(auto_attribs=True)
 class ChartPoint:
-	'''Variable-enabled version of :class:`ChartPoint`'''
+	'''represents a point within a given chart of an entire simfile'''
 	chart_index: Union[int, VarRef]
 	base: Optional[VarRef]
 	offset: Union[Position, VarRef]
@@ -30,7 +30,7 @@ class ChartPoint:
 
 @attr.s(auto_attribs=True)
 class ChartRegion:
-	'''Variable-enabled version of :class:`ChartRegion`'''
+	'''span variant of :class:`ChartRegion`'''
 	start: ChartPoint # or union with VarRef itself? TODO no resolve support in manager yet
 	length: Union[Position, VarRef]
 

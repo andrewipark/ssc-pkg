@@ -3,8 +3,8 @@
 Also technically *structured* YAML lexer functions
 '''
 
-from fractions import Fraction
 import re
+from fractions import Fraction
 from typing import Any, Callable, List, Sequence, TypeVar, Union, cast
 
 from . import commands

@@ -32,7 +32,7 @@ def exc_index_trace(e: Exception):
 		is_last = curr_exc.__cause__ is None
 
 		if not is_last:
-			if type(curr_exc) is not exc_type:
+			if not isinstance(curr_exc, exc_type):
 				raise curr_exc # not handled properly
 			if not supports_context:
 				raise TypeError(f'bad context: {args}')
@@ -45,7 +45,7 @@ def exc_index_trace(e: Exception):
 				msg = str(args[1:])
 		else:
 			msg = type(curr_exc).__name__
-			if (m := str(curr_exc)):
+			if m := str(curr_exc):
 				msg += ': ' + m
 
 		if (not exc_pairs) or (exc_pairs[-1][1]):
