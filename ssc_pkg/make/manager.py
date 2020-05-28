@@ -9,7 +9,7 @@ import attr
 from ssc_pkg.simfile import Simfile, Chart
 from ssc_pkg import notedata
 
-from . import commands, util
+from . import commands
 
 
 _T = TypeVar('_T')
@@ -33,7 +33,21 @@ def _chart_from_index(simfile: Simfile, chart_index: int, indices) -> Chart:
 class _Context:
 	'''The equivalent of a stack frame for the manager'''
 
-	variables: Dict[str, Union[util.VarValue, commands.Def]] = attr.Factory(dict)
+	variables: Dict[str, Union[commands.VarValue, commands.Def]] = attr.Factory(dict)
+
+
+# concrete versions of commands data structures
+
+@attr.s(auto_attribs=True)
+class ChartPoint:
+	chart_index: int
+	position: notedata.Position
+
+
+@attr.s(auto_attribs=True)
+class ChartRegion:
+	start: ChartPoint
+	length: notedata.Position
 
 
 @attr.s(auto_attribs=True)
@@ -66,21 +80,21 @@ class Manager:
 			raise CommandError(f"'{name}' is a {type(test).__name__}, not {t.__name__}")
 		return test
 
-	def resolve(self, what: Union[_T, util.VarRef], t: Type[_T]) -> _T:
+	def resolve(self, what: Union[_T, commands.VarRef], t: Type[_T]) -> _T:
 		'''Another convenience lookup function for converting Union[variable, object] to assured object'''
-		if isinstance(what, util.VarRef):
+		if isinstance(what, commands.VarRef):
 			return self.lookup_typed(what.name, t)
 		return what
 
-	def reduce_ChartPoint(self, chart_point: util.ChartPointVar) -> util.ChartPoint:
+	def reduce_ChartPoint(self, chart_point: commands.ChartPoint) -> ChartPoint:
 		base = self.lookup_typed(chart_point.base.name, Fraction) if chart_point.base else Fraction(0)
-		return util.ChartPoint(
+		return ChartPoint(
 			chart_index = self.resolve(chart_point.chart_index, int),
 			position = base + self.resolve(chart_point.offset, Fraction),
 		)
 
-	def reduce_ChartRegion(self, chart_region: util.ChartRegionVar) -> util.ChartRegion:
-		return util.ChartRegion(
+	def reduce_ChartRegion(self, chart_region: commands.ChartRegion) -> ChartRegion:
+		return ChartRegion(
 			start = self.reduce_ChartPoint(chart_region.start),
 			length = self.resolve(chart_region.length, Fraction),
 		)

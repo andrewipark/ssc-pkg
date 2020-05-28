@@ -7,7 +7,8 @@ from fractions import Fraction
 import re
 from typing import Any, Callable, List, Sequence, TypeVar, Union, cast
 
-from . import util
+from . import commands
+from .util import IndexPath
 
 
 class ParseError(Exception):
@@ -20,7 +21,7 @@ class ParseError(Exception):
 _T = TypeVar('_T')
 
 
-def get_u(what, indices: util.IndexPath) -> Any:
+def get_u(what, indices: IndexPath) -> Any:
 	'''verifies that a key path exists, and returns what is there
 
 	Args:
@@ -40,7 +41,7 @@ def get_u(what, indices: util.IndexPath) -> Any:
 	return what
 
 
-def get(what, indices: util.IndexPath, check: Callable[[Any], _T]) -> _T:
+def get(what, indices: IndexPath, check: Callable[[Any], _T]) -> _T:
 	'''Type-safe version of :meth:`~get` with check function'''
 	what = get_u(what, indices)
 	try:
@@ -49,7 +50,7 @@ def get(what, indices: util.IndexPath, check: Callable[[Any], _T]) -> _T:
 		raise ParseError(indices) from e
 
 
-def get_sequence(what, indices: util.IndexPath, check: Callable[[Any], _T]) -> Sequence[_T]:
+def get_sequence(what, indices: IndexPath, check: Callable[[Any], _T]) -> Sequence[_T]:
 	'''syntactic sugar wrapper for :meth:`get` and :meth:`check_sequence_type`'''
 	return get(what, indices, lambda v: check_sequence_type(v, check))
 
@@ -125,16 +126,16 @@ def match_to_Fraction(m: re.Match) -> Fraction:
 	return position
 
 
-def match_to_ChartPointVar(m: re.Match) -> util.ChartPointVar:
+def match_to_ChartPoint(m: re.Match) -> commands.ChartPoint:
 	'''Converts a match object returned from :const:`FRACTION_REGEX`'''
-	base = util.VarRef(m['base']) if m['base'] else None
+	base = commands.VarRef(m['base']) if m['base'] else None
 	try:
-		chart_index: Union[int, util.VarRef] = int(m['cref'])
+		chart_index: Union[int, commands.VarRef] = int(m['cref'])
 	except ValueError:
-		chart_index = util.VarRef(m['cref'])
+		chart_index = commands.VarRef(m['cref'])
 	offset = match_to_Fraction(m)
 
-	return util.ChartPointVar(chart_index = chart_index, base = base, offset = offset)
+	return commands.ChartPoint(chart_index = chart_index, base = base, offset = offset)
 
 
 # # actual parse methods
@@ -151,7 +152,7 @@ def parse_Fraction(what) -> Fraction:
 	raise TypeError(f"expected a fraction, got {type(what).__name__} instead: {what}")
 
 
-def parse_scalar(what) -> util.Scalar:
+def parse_scalar(what) -> commands.Scalar:
 	'''parse the contents as an ``int``, ``Fraction``, and ``str``, in that order of priority
 
 	|WARNING| experimental
@@ -167,18 +168,18 @@ def parse_scalar(what) -> util.Scalar:
 	raise TypeError(f'expected a scalar, got {type(what).__name__} instead: {what}')
 
 
-def parse_ChartPointVar(what) -> util.ChartPointVar:
+def parse_ChartPoint(what) -> commands.ChartPoint:
 	s = check_str(what)
 	m = CHARTPOINT_REGEX.fullmatch(s)
 	if not m:
 		raise ValueError(f'invalid chart point string: {s}')
-	return match_to_ChartPointVar(m)
+	return match_to_ChartPoint(m)
 
 
-def parse_ChartRegionVar(what) -> util.ChartRegionVar:
-	start = get(what, ('src',), parse_ChartPointVar)
+def parse_ChartRegion(what) -> commands.ChartRegion:
+	start = get(what, ('src',), parse_ChartPoint)
 	length = get(what, ('len',), parse_Fraction)
-	return util.ChartRegionVar(start = start, length = length)
+	return commands.ChartRegion(start = start, length = length)
 
 
 # parse helpers for complex types

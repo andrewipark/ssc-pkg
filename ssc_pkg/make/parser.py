@@ -4,9 +4,8 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from . import commands
 from . import parse as p
-from .commands import Command
+from .commands import Command, VarValue
 from .parse import ParseError
-from .util import VarValue
 
 from ssc_pkg import notedata
 
@@ -28,8 +27,8 @@ class Parser:
 		except LookupError:
 			mode = ome.KEEP_OTHER
 		return commands.Copy(
-			targets = p.get_sequence(command, ('dest',), p.parse_ChartPointVar),
-			source = p.get(command, (), p.parse_ChartRegionVar),
+			targets = p.get_sequence(command, ('dest',), p.parse_ChartPoint),
+			source = p.get(command, (), p.parse_ChartRegion),
 			overlay_mode = mode,
 		)
 

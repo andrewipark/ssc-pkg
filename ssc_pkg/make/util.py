@@ -1,64 +1,11 @@
-'''miscellaneous functions that defy categorization'''
+'''miscellaneous exception niceties'''
 
 from typing import List, Optional, Sequence, Tuple, Union
-from fractions import Fraction
 
-import attr
-
-from ssc_pkg.notedata import Position
-
-
-# support types
-
-# # concrete
 
 IndexPath = Sequence[Union[int, str]]
+'''|TODO| apparently for type annotations?'''
 
-
-Scalar = Union[int, Fraction, str]
-
-
-@attr.s(auto_attribs=True)
-class ChartPoint:
-	'''_NotePosition with chart tag'''
-	chart_index: int
-	position: Position
-
-
-@attr.s(auto_attribs=True)
-class ChartRegion:
-	'''NoteData span with chart tag'''
-	start: ChartPoint
-	length: Position
-
-
-# # variable
-
-VarValue = Union[Scalar, Sequence[Scalar]]
-
-
-@attr.s(auto_attribs=True)
-class VarRef:
-	'''reference to context-defined variable'''
-	name: str
-
-
-@attr.s(auto_attribs=True)
-class ChartPointVar:
-	'''Variable-enabled version of :class:`ChartPoint`'''
-	chart_index: Union[int, VarRef]
-	base: Optional[VarRef]
-	offset: Union[Position, VarRef]
-
-
-@attr.s(auto_attribs=True)
-class ChartRegionVar:
-	'''Variable-enabled version of :class:`ChartRegion`'''
-	start: ChartPointVar # or union with VarRef itself? TODO no resolve support in manager yet
-	length: Union[Position, VarRef]
-
-
-# exception-related
 
 def exc_index_trace(e: Exception):
 	'''Generates neat traceback stacks from exceptions containing index data
