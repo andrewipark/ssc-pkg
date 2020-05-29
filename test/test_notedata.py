@@ -199,6 +199,10 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(jack_keep_self[conflict_pos], row_one.notes)
 		self.assertEqual(jack_keep_other[conflict_pos], row_two.notes)
 
+		# check ""commutativity""
+		jack_keep_self_kinda = jack_two.overlay(jack_one, OverlayMode.KEEP_OTHER)
+		self.assertEqual(jack_keep_self_kinda, jack_keep_self)
+
 	def test_sm_to_notedata(self):
 		self.assertEqual(notedata.sm_to_notedata(self.simple_text), self.simple)
 

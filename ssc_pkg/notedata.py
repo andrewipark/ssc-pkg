@@ -153,7 +153,7 @@ class NoteData(Generic[NoteType]):
 	def clear_range(self, start: PositionSafe, stop: PositionSafe) -> 'NoteData[NoteType]':
 		'''Remove all notes in the specified half-open range'''
 		antislice_start, antislice_stop = (self.__index_of_row(x) for x in (start, stop))
-		return attr.evolve(self, notes = chain(self._notes[:antislice_start], self._notes[antislice_stop:]))
+		return attr.evolve(self, notes = self._notes[:antislice_start] + self._notes[antislice_stop:])
 
 	class OverlayMode(Enum):
 		'''Strategies for :meth:`NoteData.overlay` when both containers have notes at the same position'''
@@ -167,10 +167,25 @@ class NoteData(Generic[NoteType]):
 
 		if mode == self.OverlayMode.RAISE:
 			return attr.evolve(self, notes = chain(self._notes, other._notes))
+		if not self:
+			return other
+		if not other:
+			return self
+
+		rows = []
+
+		# do a lookup on the starting indices for the merge
+		# to optimize for when the other object occupies a much smaller time range
+		# Because of lookup costs, this is slightly slower if the notedata is small
+		i_s = self.__index_of_row(other._notes[0].position)
+		i_o = 0
+		# i_o = other.__index_of_row(self._notes[0].position)
+		# it'd be more efficient to do other.overlay(self) instead
+		# one or the other must surely be zero
+		rows.extend(self._notes[:i_s])
+		# rows.extend(other._notes[:i_o])
 
 		# bastardized 'merge' of mergesort
-		rows = []
-		i_s, i_o = 0, 0
 		while i_s < len(self._notes) and i_o < len(other._notes):
 			# print(i_s, i_o)
 			if self._notes[i_s].position < other._notes[i_o].position:
