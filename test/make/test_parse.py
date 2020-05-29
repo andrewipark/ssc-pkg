@@ -45,8 +45,8 @@ EXAMPLE_PARSE_FRACTIONS: Mapping[str, Fraction] = {
 EXAMPLE_PARSE_CHARTPOINT_PREFIXES: Mapping[str, Tuple] = {
 	'2 @': (2, None),
 	'river @': (c.VarRef('river'), None),
-	'ba @ 3: ': (c.VarRef('ba'), c.VarRef('3')),
-	'nile@ va:': (c.VarRef('nile'), c.VarRef('va')),
+	'ba @ 3 @ ': (c.VarRef('ba'), c.VarRef('3')),
+	'nile@ va@': (c.VarRef('nile'), c.VarRef('va')),
 }
 
 

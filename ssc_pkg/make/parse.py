@@ -110,7 +110,7 @@ FRACTION_REGEX = re.compile(
 
 CHARTPOINT_REGEX = re.compile(
 	r'(?P<cref>\w+)\s*@\s*'
-	r'(?:(?P<base>\w+)\s*:\s*)?'
+	r'(?:(?P<base>\w+)\s*@\s*)?'
 	+ FRACTION_REGEX.pattern
 )
 '''regex object to match a `class`:~.ChartPointVar:'''
