@@ -116,10 +116,12 @@ def _run_copy(args, files):
 			dest.mkdir(exist_ok=True)
 
 	time_elapsed = perf_counter_ns() - time_original
-	logging.info(f"copied {len(files)} objects in {time_elapsed // 1000000} ms")
+	logging.info(f"copied {len(files)} objects ({time_elapsed / 1000000 :.0f} ms)")
 
 
 def _load_metatransform_data(transform_obj, target: Path, original: Path, max_depth: int = 8):
+	time_original = perf_counter_ns()
+
 	file_path, key_path = transform_obj.data_path()
 	try_paths = [p / file_path for p in [target.parent, original.parent]]
 	try:
@@ -161,6 +163,9 @@ def _load_metatransform_data(transform_obj, target: Path, original: Path, max_de
 				f'transform {type(transform_obj).__name__} requested a key too deep ({max_depth})'
 			)
 
+	time_elapsed = perf_counter_ns() - time_original
+	transform_obj.logger.debug(f"loaded transform metadata ({time_elapsed / 1000000 :.0f} ms)")
+
 	return data
 
 
@@ -187,7 +192,7 @@ def _run_transform_obj(
 def _run_transform_action(transform_obj, target: Path, original: Path):
 	'''Run the provided transform with the paths provided'''
 
-	time_original = perf_counter_ns()
+	time_start = perf_counter_ns()
 
 	# load
 	# NOTE it might be faster not to load very large simfiles
@@ -201,20 +206,19 @@ def _run_transform_action(transform_obj, target: Path, original: Path):
 		f"start: '{sf_orig.title_transliterated or sf_orig.title}' located at '{target}'"
 	)
 	sf_new = _run_transform_obj(transform_obj, sf_orig, target, original)
-	if sf_new is None:
-		return
 
-	# atomically swap the result over the old file
-	target_new = target.parent / (target.name + '.transformed')
-	with open(target_new, 'x', encoding='utf-8') as f:
-		f.write(simfile.simfile_to_ssc(sf_new))
-	target_new.replace(target)
+	if sf_new is not None:
+		# atomically swap the result over the old file
+		target_new = target.parent / (target.name + '.transformed')
+		with open(target_new, 'x', encoding='utf-8') as f:
+			f.write(simfile.simfile_to_ssc(sf_new))
+		target_new.replace(target)
 
 	if isinstance(transform_obj, abc.Cleanable):
 		transform_obj.clean()
 
-	time_elapsed = perf_counter_ns() - time_original
-	transform_obj.logger.debug(f"transformed '{target}' in {time_elapsed // 1000000} ms")
+	time_elapsed = perf_counter_ns() - time_start
+	transform_obj.logger.debug(f"transformed '{target}' ({time_elapsed / 1000000 :.0f} ms)")
 
 
 def _run_transform(args, simfiles):
@@ -244,10 +248,10 @@ def _run_transform(args, simfiles):
 				raise
 
 		time_elapsed = perf_counter_ns() - time_original_curr
-		logging.debug(f"ran all transforms on {target} in {time_elapsed // 1000000} ms")
+		logging.debug(f"transformed {target} ({time_elapsed / 1000000 :.0f} ms)")
 
 	time_elapsed = perf_counter_ns() - time_original
-	logging.info(f"finished transform on {len(simfiles)} simfiles in {time_elapsed // 1000000} ms")
+	logging.info(f"transformed {len(simfiles)} simfiles ({time_elapsed / 1000000 :.0f} ms)")
 
 
 def run(args):
