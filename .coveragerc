@@ -20,4 +20,6 @@ source = .
 show_missing = True
 skip_covered = True
 exclude_lines =
-	raise AssertionError(?:\(.*\))?
+	raise AssertionError(?:\(.+\))?
+	raise NotImplementedError(?:\(.+\))?
+	#\w*coverage: exclude
