@@ -97,8 +97,8 @@ def check_sequence_type(what, check: Callable[[Any], _T]) -> Sequence[_T]:
 # # helpers
 
 FRACTION_REGEX = re.compile(
-	r'(?=.)' # don't match the empty string
 	r'(?:(?P<s>\+|-)\s*)?' # sign
+	r'(?=.)' # don't match the empty string
 	r'(?P<i>\d+)?' # integer
 	r'(?:' + (
 		r'(?(i)\s+)' # if there was an integer part, force whitespace
@@ -109,9 +109,9 @@ FRACTION_REGEX = re.compile(
 
 
 CHARTPOINT_REGEX = re.compile(
-	r'(?P<cref>\w+)\s*@\s*'
-	r'(?:(?P<base>\w+)\s*@\s*)?'
-	+ FRACTION_REGEX.pattern
+	r'(?P<cref>\w+)(?=.)'
+	r'(?:\s*@\s*(?P<base>\w+))?'
+	r'(?P<fr>\s*~\s*' + FRACTION_REGEX.pattern + ')?'
 )
 '''regex object to match a `class`:~.ChartPointVar:'''
 
@@ -133,7 +133,9 @@ def match_to_ChartPoint(m: re.Match) -> commands.ChartPoint:
 		chart_index: Union[int, commands.VarRef] = int(m['cref'])
 	except ValueError:
 		chart_index = commands.VarRef(m['cref'])
-	offset = match_to_Fraction(m)
+	offset = match_to_Fraction(m) if m['fr'] else Fraction(0)
+	if not (m['base'] or m['fr']):
+		raise Exception('neither base nor offset specified')
 
 	return commands.ChartPoint(chart_index = chart_index, base = base, offset = offset)
 

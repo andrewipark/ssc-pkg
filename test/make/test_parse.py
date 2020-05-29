@@ -12,9 +12,9 @@ from ssc_pkg.make.util import IndexPath, exc_index_trace
 EXAMPLE_OBJS: Mapping[type, Sequence[Any]] = { #
 	int: [0, 1, -1, 3, -46, 9, 2578, 2981],
 	str: [
-		'352w525w2', 'aeiewirbvewir', '\u03f9\u39b0', 'ssc_pkg.make',
+		'352w525w2', 'aeiew irbve', 'spaces  ', '\u03f9\u39b0', 'ssc_pkg.make',
 		# not fraction test cases
-		'22 6', '-3 2', '--3/2', '2 22220 /',
+		'22 6', '-3 2', '--3/2', '2 22220 /', '-', '', '+',
 	],
 	Fraction: [Fraction(0), Fraction(-3, 49), Fraction(200, 15)],
 	type(None): [None],
@@ -43,10 +43,10 @@ EXAMPLE_PARSE_FRACTIONS: Mapping[str, Fraction] = {
 
 
 EXAMPLE_PARSE_CHARTPOINT_PREFIXES: Mapping[str, Tuple] = {
-	'2 @': (2, None),
-	'river @': (c.VarRef('river'), None),
-	'ba @ 3 @ ': (c.VarRef('ba'), c.VarRef('3')),
-	'nile@ va@': (c.VarRef('nile'), c.VarRef('va')),
+	'2 ~': (2, None),
+	'river ~': (c.VarRef('river'), None),
+	'ba @ 3 ~ ': (c.VarRef('ba'), c.VarRef('3')),
+	'nile @ va~': (c.VarRef('nile'), c.VarRef('va')),
 }
 
 
@@ -160,6 +160,13 @@ class TestParse(unittest.TestCase):
 				self.assertEqual(p.parse_ChartPoint(pr + fs), ex)
 
 	def test_parse_ChartPoint_fail(self):
+		for s in EXAMPLE_OBJS[str]:
+			with self.assertRaises(ValueError, msg=s):
+				p.parse_ChartPoint(s)
+			for fs, f in EXAMPLE_PARSE_FRACTIONS.items():
+				v = fs + s
+				with self.assertRaises(ValueError, msg=v):
+					p.parse_ChartPoint(v)
 		for t in types_except(str):
 			for v in EXAMPLE_OBJS[t]:
 				with self.assertRaises(TypeError, msg=str(v)):
