@@ -64,19 +64,16 @@ class Manager:
 			frame = self.frames[len(self.frames) - i - 1] # search frames from top down
 			if name in frame.variables:
 				return frame.variables[name]
-		raise KeyError(name)
+		raise KeyError(f"'{name}' not defined")
 
 	def lookup_typed(self, name: str, t: Type[_T]) -> _T:
 		'''convenience lookup function with guaranteed return type (caveat: generic subscripting)'''
-		try:
-			test = self.lookup(name)
-		except KeyError:
-			raise CommandError(f"'{name}' not defined") from None
+		test = self.lookup(name)
 		if issubclass(t, Fraction): # special case convertible types
 			if isinstance(test, int):
 				test = Fraction(test)
 		if not isinstance(test, t):
-			raise CommandError(f"'{name}' is a {type(test).__name__}, not {t.__name__}")
+			raise TypeError(f"'{name}' is a {type(test).__name__}, not {t.__name__}")
 		return test
 
 	def resolve(self, what: Union[_T, commands.VarRef], t: Type[_T]) -> _T:
