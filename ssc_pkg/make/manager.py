@@ -124,7 +124,6 @@ class Manager:
 					mode = copy.overlay_mode
 				)
 			except Exception as e:
-				print(copy)
 				raise CommandError((i,)) from e
 
 	def _run_Pragma(self, pragma: commands.Pragma, _: Simfile):
@@ -151,6 +150,7 @@ class Manager:
 		self.frames[-1].variables[c_def.name] = c_def
 
 	def _run_Call(self, call: commands.Call, simfile: Simfile):
+		# this exception handling logic is wayyyyy more convoluted than it needs to be...
 		try:
 			what = self.lookup(call.name)
 		except KeyError:
@@ -162,7 +162,7 @@ class Manager:
 			)
 		try:
 			self._run_Group(what.body, simfile)
-		except CommandError as e:
+		except Exception as e:
 			raise CommandError(('<fn>' + call.name,), "error during function call") from e
 
 	def _run_Let(self, let: commands.Let, _: Simfile):
@@ -177,7 +177,7 @@ class Manager:
 				with self:
 					self._run_Let(commands.Let(c_for.name, value), simfile)
 					self._run_Group(c_for.body, simfile)
-			except CommandError as e:
+			except Exception as e:
 				raise CommandError((i,), f"'{c_for.name}': {type(value).__name__} := {value}") from e
 
 	def run(self, command: commands.Command, simfile: Simfile):
@@ -204,19 +204,19 @@ class Manager:
 		if ct in cmd_type_fn:
 			try:
 				cmd_type_fn[ct](command, simfile)
-			except CommandError as e:
+			except Exception as e:
 				if ct is commands.Group or ct is commands.Call:
 					# these are structural, we don't care about the name
 					raise e
 				raise CommandError((ct.__name__,)) from e
 
 		else:
-			raise CommandError((), f"unhandled command '{command}'")
+			raise TypeError((), f"unhandled command '{command}'")
 
 	def run_many(self, cmds: Iterable[commands.Command], simfile: Simfile):
 		'''convenience function to run a stream of commands'''
 		for i, c in enumerate(cmds):
 			try:
 				self.run(c, simfile)
-			except CommandError as e:
+			except Exception as e:
 				raise CommandError((i,)) from e
