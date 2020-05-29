@@ -1,9 +1,10 @@
 import unittest
 from fractions import Fraction
-from typing import Any, Iterable, Mapping, Sequence, Type
+from typing import Any, Iterable, Mapping, Sequence, Tuple, Type
 
 import attr
 
+import ssc_pkg.make.commands as c
 import ssc_pkg.make.parse as p
 from ssc_pkg.make.util import IndexPath, exc_index_trace
 
@@ -28,19 +29,25 @@ EXAMPLE_OBJS: Mapping[type, Sequence[Any]] = { #
 
 
 EXAMPLE_PARSE_FRACTIONS: Mapping[str, Fraction] = {
-	'2': Fraction(2),
 	'0': Fraction(0),
+	'2': Fraction(2),
 	'5/2': Fraction(5, 2),
 	'8 / 3': Fraction(8, 3),
-	'3 / 4': Fraction(3, 4),
-	'2 / 7': Fraction(2, 7),
+	'2 / 725': Fraction(2, 725),
 	'2222 / 3': Fraction(2222, 3),
-	'225 / 8': Fraction(225, 8),
-	'5 2 / 81': Fraction(5 * 81 + 2, 81),
+	'5 25 / 8': Fraction(65, 8),
 	'24 999 / 1000': Fraction(24999, 1000),
 	'333 1 / 2': Fraction(667, 2),
 }
 '''Things that should parse as fractions'''
+
+
+EXAMPLE_PARSE_CHARTPOINT_PREFIXES: Mapping[str, Tuple] = {
+	'2 @': (2, None),
+	'river @': (c.VarRef('river'), None),
+	'ba @ 3: ': (c.VarRef('ba'), c.VarRef('3')),
+	'nile@ va:': (c.VarRef('nile'), c.VarRef('va')),
+}
 
 
 @attr.s(auto_attribs = True)
@@ -144,5 +151,20 @@ class TestParse(unittest.TestCase):
 				with self.assertRaises(TypeError, msg=str(v)):
 					p.parse_Fraction(v)
 
-	def test_parse_scalar(self):
-		pass # TODO until not experimental
+	# def test_parse_scalar(self): # TODO until not experimental
+
+	def test_parse_ChartPoint(self):
+		for pr, (ci, base) in EXAMPLE_PARSE_CHARTPOINT_PREFIXES.items():
+			for fs, f in EXAMPLE_PARSE_FRACTIONS.items():
+				ex = c.ChartPoint(chart_index = ci, base = base, offset = f)
+				self.assertEqual(p.parse_ChartPoint(pr + fs), ex)
+
+	def test_parse_ChartPoint_fail(self):
+		for t in types_except(str):
+			for v in EXAMPLE_OBJS[t]:
+				with self.assertRaises(TypeError, msg=str(v)):
+					p.parse_ChartPoint(v)
+
+	# def test_parse_ChartRegion(self): # TODO
+
+	# def test_parse_CHartRegion_fail(self): # TODO
