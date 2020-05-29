@@ -27,8 +27,7 @@ class MakeTransform(MetaTransform):
 		manager = Manager()
 
 		try:
-			for command in parser.parse_commands(obj):
-				manager.run(command, sim)
+			manager.run_many(parser.parse_commands(obj), sim)
 		except ParseError as e:
 			raise Exception(
 				'failed to parse data:\n'

@@ -25,7 +25,7 @@ class Parser:
 			except KeyError:
 				raise ParseError((MODE_KEY,), f'invalid overlay mode: {try_enum}') from None
 		except LookupError:
-			mode = ome.KEEP_OTHER
+			mode = ome.RAISE
 		return commands.Copy(
 			targets = p.get_sequence(command, ('dest',), p.parse_ChartPoint),
 			source = p.get(command, (), p.parse_ChartRegion),

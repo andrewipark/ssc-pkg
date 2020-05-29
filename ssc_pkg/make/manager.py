@@ -115,12 +115,17 @@ class Manager:
 		source = source[src.start.position: src.start.position + src.length] # type: ignore # mypy-slice
 
 		for i, dv in enumerate(copy.targets):
-			d = self.reduce_ChartPoint(dv)
-			dest_chart = _chart_from_index(simfile, d.chart_index, ('target', i))
-			dest_chart.notes = dest_chart.notes.overlay(
-				source.shift(d.position - src.start.position),
-				mode = copy.overlay_mode
-			)
+			try:
+				d = self.reduce_ChartPoint(dv)
+				print(d.position - src.start.position)
+				dest_chart = _chart_from_index(simfile, d.chart_index, ('target', i))
+				dest_chart.notes = dest_chart.notes.overlay(
+					source.shift(d.position - src.start.position),
+					mode = copy.overlay_mode
+				)
+			except Exception as e:
+				print(copy)
+				raise CommandError((i,)) from e
 
 	def _run_Pragma(self, pragma: commands.Pragma, _: Simfile):
 		if pragma.name == 'echo':
