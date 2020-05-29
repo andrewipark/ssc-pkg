@@ -209,6 +209,30 @@ class NoteData(Generic[NoteType]):
 
 		return attr.evolve(self, notes = rows)
 
+	def column_swap(self, columns: Iterable[int]) -> 'NoteData[NoteType]':
+		'''Swaps the columns of this object.
+
+		For each column, take in an index of another column to use as the new column,
+		e.g. an array of zeroes will set all columns to be equal to the first column
+		'''
+
+		# strings have to be assembled a bit differently
+		if not self:
+			return self
+
+		if not isinstance(self._notes[0].notes, str):
+			raise NotImplementedError
+
+		cache = {}
+		rows = []
+		for r in self._notes:
+			if r.notes not in cache:
+				# have to compute the transform fresh
+				cache[r.notes] = ''.join(r.notes[v] for v in columns)
+			rows.append(_NoteRow(r.position, cache[r.notes]))
+
+		return attr.evolve(self, notes = rows)
+
 
 def sm_to_notedata(data: str) -> NoteData[str]:
 	measures: List[List[str]] = [m.strip().split() for m in data.split(_SM_TEXT_MEASURE_SEP)]

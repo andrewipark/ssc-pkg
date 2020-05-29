@@ -203,6 +203,25 @@ class TestNoteDataSimple(unittest.TestCase):
 		jack_keep_self_kinda = jack_two.overlay(jack_one, OverlayMode.KEEP_OTHER)
 		self.assertEqual(jack_keep_self_kinda, jack_keep_self)
 
+	def test_overlay_degenerate(self):
+		empty: notedata.NoteData = notedata.NoteData()
+		self.assertEqual(self.simple.overlay(empty), self.simple)
+		self.assertEqual(empty.overlay(self.simple), self.simple)
+
+	def test_column_swap(self):
+		single: notedata.NoteData[str] = notedata.NoteData([notedata._NoteRow(Fraction(3), 'abcdef')])
+		swaps = {
+			(0, 1, 2, 3, 4, 5): 'abcdef',
+			(5, 4, 3, 2, 1, 0): 'fedcba',
+			(2, 5, 3, 1, 4, 0): 'cfdbea',
+			(1, 2, 1, 2, 1, 2): 'bcbcbc',
+		}
+
+		for u, ex in swaps.items():
+			result = single.column_swap(u)
+			self.assertEqual(len(result), 1)
+			self.assertEqual(result[3], ex)
+
 	def test_sm_to_notedata(self):
 		self.assertEqual(notedata.sm_to_notedata(self.simple_text), self.simple)
 
