@@ -165,7 +165,6 @@ class TestParser(unittest.TestCase):
 	def test_invalid(self):
 		collection = [
 			None,
-			(i for i in range(300)),
 			300,
 			unittest, # the module object... yes, seriously
 			{'not_a_command': 'unittest'},

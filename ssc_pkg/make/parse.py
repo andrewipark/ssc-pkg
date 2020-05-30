@@ -134,8 +134,7 @@ def match_to_ChartPoint(m: re.Match) -> commands.ChartPoint:
 	except ValueError:
 		chart_index = commands.VarRef(m['cref'])
 	offset = match_to_Fraction(m) if m['fr'] else Fraction(0)
-	if not (m['base'] or m['fr']):
-		raise Exception('neither base nor offset specified')
+	assert m['base'] or m['fr'], 'neither base nor offset specified (should not be possible b/c regex)'
 
 	return commands.ChartPoint(chart_index = chart_index, base = base, offset = offset)
 
