@@ -22,4 +22,5 @@ skip_covered = True
 exclude_lines =
 	raise AssertionError(?:\(.+\))?
 	raise NotImplementedError(?:\(.+\))?
-	#\w*coverage: exclude
+	\#\w*coverage: exclude
+	\# mypy-mixin

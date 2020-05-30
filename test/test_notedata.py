@@ -4,6 +4,9 @@ from fractions import Fraction
 from ssc_pkg import notedata
 
 
+OverlayMode = notedata.NoteData.OverlayMode
+
+
 class TestNoteDataSimple(unittest.TestCase):
 
 	def setUp(self):
@@ -178,8 +181,6 @@ class TestNoteDataSimple(unittest.TestCase):
 		self.assertEqual(self.long_jack.clear_range(a, b).overlay(self.long_jack[a:b]), self.long_jack)
 
 	def test_overlay_modes(self):
-		OverlayMode = notedata.NoteData.OverlayMode
-
 		conflict_pos = self.long_jack_interval * self.long_jack_length * 3 / 2
 		row_one = notedata._NoteRow(conflict_pos, 'aaaa')
 		row_two = notedata._NoteRow(conflict_pos, 'bbbb')
@@ -205,8 +206,9 @@ class TestNoteDataSimple(unittest.TestCase):
 
 	def test_overlay_degenerate(self):
 		empty: notedata.NoteData = notedata.NoteData()
-		self.assertEqual(self.simple.overlay(empty), self.simple)
-		self.assertEqual(empty.overlay(self.simple), self.simple)
+		for m in OverlayMode:
+			self.assertEqual(self.simple.overlay(empty, m), self.simple)
+			self.assertEqual(empty.overlay(self.simple, m), self.simple)
 
 	def test_column_swap(self):
 		single: notedata.NoteData[str] = notedata.NoteData([notedata._NoteRow(Fraction(3), 'abcdef')])
@@ -221,6 +223,11 @@ class TestNoteDataSimple(unittest.TestCase):
 			result = single.column_swap(u)
 			self.assertEqual(len(result), 1)
 			self.assertEqual(result[3], ex)
+
+		for u in swaps:
+			self.assertEqual(notedata.NoteData().column_swap(u), notedata.NoteData())
+
+		self.assertEqual(self.simple.column_swap([3, 2, 1, 0]).column_swap([3, 2, 1, 0]), self.simple)
 
 	def test_sm_to_notedata(self):
 		self.assertEqual(notedata.sm_to_notedata(self.simple_text), self.simple)
