@@ -10,8 +10,17 @@ from pathlib import Path
 from time import perf_counter_ns
 from typing import Any, Callable, Iterable, List, Optional
 
+from yaml import load
+
 from . import simfile, transforms
 from .transform import abc
+
+
+# standard YAML sequence
+try:
+	from yaml import CLoader as Loader
+except ImportError:
+	from yaml import Loader # type: ignore
 
 
 # list file
@@ -136,13 +145,6 @@ def _load_metatransform_data(transform_obj, target: Path, original: Path, max_de
 			f"(searched [{try_paths_str}])"
 		)
 		return None
-
-	# standard YAML sequence
-	from yaml import load
-	try:
-		from yaml import CLoader as Loader
-	except ImportError:
-		from yaml import Loader # type: ignore
 
 	with open(load_file_path, encoding='utf-8') as f:
 		data = load(f, Loader = Loader)

@@ -14,9 +14,10 @@ _TimingPosition = Decimal # somewhat tied to SM
 
 @attr.s(auto_attribs=True)
 class TimingData:
-	'''Mutable POD for representing the timing data of a simfile'''
+	'''Timing data (e.g. BPM, stops) of (possibly part of) a simfile'''
 	@attr.s(auto_attribs=True)
 	class ComboMultiplier:
+		'''combo multiplier timing segment'''
 		hit: int
 		miss: int
 
@@ -52,7 +53,7 @@ class TimingData:
 
 @attr.s(auto_attribs=True)
 class Chart:
-	'''Mutable POD representing a complete chart'''
+	'''Chart with notes and metadata'''
 
 	game_type: str = 'unknown' # semantic chart type
 
@@ -77,7 +78,7 @@ class Chart:
 
 @attr.s(auto_attribs=True)
 class Simfile:
-	'''Mutable POD representing an entire simfile'''
+	'''Song and artist display metadata, and associated charts'''
 
 	# common information
 	title: str = ''
@@ -113,4 +114,7 @@ class Simfile:
 	charts: List[Chart] = attr.Factory(list)
 
 	def is_split_timing(self) -> bool:
+		''''split timing' := any charts have their own timing data,
+		instead of inheriting the data from the top-level simfile
+		'''
 		return any(c.timing_data for c in self.charts)

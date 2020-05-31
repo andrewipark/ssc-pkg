@@ -1,3 +1,5 @@
+''':class:`~.MSDItem` ↔ rich Python object conversion for simfiles'''
+
 from collections.abc import Mapping as MappingABC
 from decimal import Decimal
 from enum import Enum, auto

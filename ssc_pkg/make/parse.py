@@ -41,11 +41,11 @@ def get_u(what, indices: IndexPath) -> Any:
 	return what
 
 
-def get(what, indices: IndexPath, check: Callable[[Any], _T]) -> _T:
-	'''Type-safe version of :meth:`~get` with check function'''
+def get(what, indices: IndexPath, value: Callable[[Any], _T]) -> _T:
+	'''Type-safe version of :meth:`~get` with value function for type checking or conversion'''
 	what = get_u(what, indices)
 	try:
-		return check(what)
+		return value(what)
 	except Exception as e:
 		raise ParseError(indices) from e
 
@@ -58,35 +58,35 @@ def get_sequence(what, indices: IndexPath, check: Callable[[Any], _T]) -> Sequen
 # simple check methods
 
 def check_int(what) -> int:
+	'''return :obj:`what`, or :exc:`TypeError` if not already an :obj:`int`'''
 	if not isinstance(what, int):
 		raise TypeError(f"expected an integer, got {type(what).__name__} instead: {what}")
 	return what
 
 
 def check_str(what) -> str:
-	'''Because Python 3's :obj:`int` is unlimited size,
-	we can assume that YAML strings never represent an :obj:`int`
-	'''
+	'''return :obj:`what`, or :exc:`TypeError` if not already a :obj:`str`'''
 	if not isinstance(what, str):
 		raise TypeError(f"expected a string, got {type(what).__name__} instead: {what}")
 	return what
 
 
 def check_sequence(what) -> Sequence:
+	'''return :obj:`what`, or :exc:`TypeError` if not already a :obj:`Sequence` (collections ABC)'''
 	if not isinstance(what, Sequence) or isinstance(what, str):
 		raise TypeError(f"expected a sequence, got {type(what).__name__} instead: {what}")
 	return what
 
 
-def check_sequence_type(what, check: Callable[[Any], _T]) -> Sequence[_T]:
-	'''check function for :func:`get` with lists of expected homogenous type'''
+def check_sequence_type(what, value: Callable[[Any], _T]) -> Sequence[_T]:
+	'''recursive check for :func:`get` with lists of expected homogenous type'''
 	# looks sort of like a get variant...
 	what = check_sequence(what)
 	ret: List[_T] = [cast(_T, None)] * len(what)
 	# by the end, all the Nones will be overwritten so the list invariant is still ok
-	for i in range(len(what)):
+	for i, v in enumerate(what):
 		try:
-			ret[i] = check(what[i])
+			ret[i] = value(v)
 		except Exception as e:
 			raise ParseError((i,)) from e
 	return ret
@@ -113,7 +113,7 @@ CHARTPOINT_REGEX = re.compile(
 	r'(?:\s*@\s*(?P<base>\w+))?'
 	r'(?P<fr>\s*~\s*' + FRACTION_REGEX.pattern + ')?'
 )
-'''regex object to match a `class`:~.ChartPointVar:'''
+'''regex object to match a :class:`~.commands.ChartPoint`'''
 
 
 def match_to_Fraction(m: re.Match) -> Fraction:
@@ -127,7 +127,7 @@ def match_to_Fraction(m: re.Match) -> Fraction:
 
 
 def match_to_ChartPoint(m: re.Match) -> commands.ChartPoint:
-	'''Converts a match object returned from :const:`FRACTION_REGEX`'''
+	'''Converts a match object returned from :const:`CHARTPOINT_REGEX`'''
 	base = commands.VarRef(m['base']) if m['base'] else None
 	try:
 		chart_index: Union[int, commands.VarRef] = int(m['cref'])
@@ -142,6 +142,13 @@ def match_to_ChartPoint(m: re.Match) -> commands.ChartPoint:
 # # actual parse methods
 
 def parse_Fraction(what) -> Fraction:
+	'''return :obj:`what` converted to a fraction
+
+	Raises:
+		ValueError: tried to convert to a fraction, but not in the right format
+			(probably doesn't match :const:`FRACTION_REGEX`)
+		TypeError: don't know how to convert to a fraction
+	'''
 	if isinstance(what, int):
 		return Fraction(what) # does user strictly need a fraction?
 	if isinstance(what, str):
@@ -170,6 +177,7 @@ def parse_scalar(what) -> commands.Scalar:
 
 
 def parse_ChartPoint(what) -> commands.ChartPoint:
+	'''return :obj:`what` converted *from a string* to a :class:`~.commands.ChartPoint`'''
 	s = check_str(what)
 	m = CHARTPOINT_REGEX.fullmatch(s)
 	if not m:
@@ -178,6 +186,8 @@ def parse_ChartPoint(what) -> commands.ChartPoint:
 
 
 def parse_ChartRegion(what) -> commands.ChartRegion:
+	'''return :obj:`what` converted from a mapping with keys 'src' and 'len' to a :class:`~.commands.ChartRegion`'''
+	# TODO must this be hardcoded?
 	start = get(what, ('src',), parse_ChartPoint)
 	length = get(what, ('len',), parse_Fraction)
 	return commands.ChartRegion(start = start, length = length)

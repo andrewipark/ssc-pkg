@@ -117,11 +117,13 @@ def text_to_msd(text: Union[str, Iterable[str]]) -> Iterable[MSDItem]: # noqa: C
 
 
 def msd_to_lines(items: Iterable[MSDItem]) -> Iterable[str]:
+	'''lazy converter of MSD items to string representation'''
 	for item in items:
 		yield str(item) + '\n'
 
 
-def msd_to_text(items: Iterable[MSDItem]) -> str: # convenience method
+def msd_to_text(items: Iterable[MSDItem]) -> str:
+	'''convenience wrapper around :meth:`~.msd_to_lines`'''
 	return ''.join(msd_to_lines(items))
 
 
