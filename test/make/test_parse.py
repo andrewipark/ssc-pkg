@@ -151,7 +151,17 @@ class TestParse(unittest.TestCase):
 				with self.assertRaises(TypeError, msg=str(v)):
 					p.parse_Fraction(v)
 
-	# def test_parse_scalar(self): # TODO until not experimental
+	def test_parse_scalar(self):
+		for i in EXAMPLE_OBJS[int]:
+			self.assertEqual(p.parse_scalar(i), i)
+		for s in EXAMPLE_OBJS[str]:
+			self.assertEqual(p.parse_scalar(s), s)
+		for fs, f in EXAMPLE_PARSE_FRACTIONS.items():
+			self.assertEqual(p.parse_scalar(fs), f)
+		for t in types_except(int, str):
+			for v in EXAMPLE_OBJS[t]:
+				with self.assertRaises(TypeError, msg=str(v)):
+					p.parse_scalar(v)
 
 	def test_parse_ChartPoint(self):
 		for pr, (ci, base) in EXAMPLE_PARSE_CHARTPOINT_PREFIXES.items():
@@ -172,6 +182,10 @@ class TestParse(unittest.TestCase):
 				with self.assertRaises(TypeError, msg=str(v)):
 					p.parse_ChartPoint(v)
 
-	# def test_parse_ChartRegion(self): # TODO
+	def test_parse_ChartRegion(self):
+		a = c.ChartPoint(chart_index = 2, base = c.VarRef('fc'), offset = Fraction(-39, 10))
+		for fs, v in EXAMPLE_PARSE_FRACTIONS.items():
+			o = {'src': '2 @ fc ~ -3 9/10', 'len': fs}
+			self.assertEqual(p.parse_ChartRegion(o), c.ChartRegion(start = a, length = v))
 
-	# def test_parse_CHartRegion_fail(self): # TODO
+	# def test_parse_ChartRegion_fail(self): # TODO
