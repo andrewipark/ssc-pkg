@@ -195,7 +195,8 @@ def msd_to_attrs_obj(
 		val_type = attr_field_data[name].type
 		if val_type is None:
 			warn(f'class {attrs_class} variable {name} has no type information')
-			val_type = Type[Any]
+			val_type = Any # type: ignore # ??
+			assert val_type is not None, 'mypy'
 
 		try:
 			creation_dict[name] = value_converter(tag, val_type, value)

@@ -18,9 +18,9 @@ setup(
 
 	extras_require={
 		'lint': [ # unit, type, code style testing
-			'mypy~=0.770',
-			'flake8~=3.8,>=3.8.2',
-			'flake8-tabs~=2.2.1',
+			'mypy~=0.781',
+			'flake8~=3.8,>=3.8.3',
+			'flake8-tabs~=2.2.2',
 		],
 	},
 
