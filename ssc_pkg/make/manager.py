@@ -135,7 +135,8 @@ class Manager:
 		elif pragma.name == 'raise':
 			raise CommandError((), f'unconditional raise via pragma: {pragma.data}')
 		elif pragma.name == 'callable':
-			# for debug use only!
+			# used in unit testing for some internal state checks
+			# huge security hazard but luckily easily checkable
 			cmd, args = pragma.data[0], pragma.data[1:]
 			result = cmd(self, *args)
 			self.logger.debug(f'callable pragma with args:\n{args}\nreturned:\n{result}')
@@ -206,7 +207,8 @@ class Manager:
 				cmd_type_fn[ct](command, simfile)
 			except Exception as e:
 				if ct is commands.Group or ct is commands.Call:
-					# these are structural, we don't care about the name
+					# Group is purely structural
+					# Call supplies its own function name
 					raise e
 				raise CommandError((ct.__name__,)) from e
 

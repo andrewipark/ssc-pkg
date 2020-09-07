@@ -147,6 +147,8 @@ def _load_metatransform_data(transform_obj, target: Path, original: Path, max_de
 		return None
 
 	with open(load_file_path, encoding='utf-8') as f:
+		# TODO security hazard, both directly and as part of make
+		# probably want a --loader=unsafe flag?
 		data = load(f, Loader = Loader)
 
 	# too bad if this file doesn't have what we want, even if another one does

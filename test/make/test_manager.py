@@ -84,7 +84,7 @@ class TestManagerObj(unittest.TestCase):
 			self.mgr_run(c.Pragma('raise', None))
 
 	def test_run_pragma_callable(self):
-		'''if this test fails, a lot of the control structure tests are useless'''
+		# if this test fails, a lot of the control structure tests are useless
 		ctx = _LogExecContext()
 		self.mgr_run(ctx.push(666666))
 		self.assertEqual(ctx.buf, [666666])
@@ -94,6 +94,7 @@ class TestManagerObj(unittest.TestCase):
 			self.mgr_run(c.Pragma('NO', None))
 
 	def test_run_group(self):
+		'''test that individually running many commands is the same as running a group of those commands'''
 		ctx_single = _LogExecContext()
 		for i in range(self.GROUP_SIZE):
 			self.mgr_run(ctx_single.push(i))
@@ -115,7 +116,7 @@ class TestManagerObj(unittest.TestCase):
 		commands = c.Group(ctx_def.push_many(range(self.GROUP_SIZE)))
 		self.mgr_run(c.Def('run_def_call_simple', commands))
 
-		self.assertEqual([], ctx_def.buf)
+		self.assertEqual([], ctx_def.buf) # we haven't run any commands yet
 		for i in range(1, 6):
 			self.mgr_run(c.Call('run_def_call_simple'))
 			self.assertEqual(ctx_single.buf * i, ctx_def.buf)
