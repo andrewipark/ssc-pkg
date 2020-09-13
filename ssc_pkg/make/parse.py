@@ -109,8 +109,8 @@ FRACTION_REGEX = re.compile(
 
 
 CHARTPOINT_REGEX = re.compile(
-	r'(?P<cref>\w+)(?=.)'
-	r'(?:\s*@\s*(?P<base>\w+))?'
+	r'(?P<cref>[\w-]+)(?=.)'
+	r'(?:\s*@\s*(?P<base>[\w-]+))?'
 	r'(?P<fr>\s*~\s*' + FRACTION_REGEX.pattern + ')?'
 )
 '''regex object to match a :class:`~.commands.ChartPoint`'''
