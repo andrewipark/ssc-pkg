@@ -6,16 +6,14 @@ Utility to build and package simfiles for easy distribution
 Installation
 ------------
 
-Run (the standard) ``pip3 install -e .`` as in `.travis.yml`_.
+``pip3 install --use-pep517 -e .``
 
 Prerequisites
 ^^^^^^^^^^^^^
 
 See `setup.py`_ for exact Python requirements,
-or `.travis.yml`_ for other requirements.
 
 .. _setup.py: setup.py
-.. _.travis.yml: .travis.yml
 
 License
 -------

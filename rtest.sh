@@ -2,7 +2,7 @@
 
 set -eux
 
-mypy .
+mypy --exclude build .
 
 # `python3` is unambiguous on Unix systems (blame PEP 394)
 # but on Windows, Python 3 answers only to `python`

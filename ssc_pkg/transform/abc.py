@@ -11,7 +11,7 @@ from ssc_pkg.simfile import Simfile
 class _Logger:
 	'''mixin to set up logging in __init__'''
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
+		super().__init__(*args, **kwargs)
 		self.logger = logging.getLogger(f'transform.{type(self).__name__}')
 
 

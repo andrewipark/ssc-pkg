@@ -209,7 +209,7 @@ def _chart_to_msd(chart: Chart) -> Iterable[msd.MSDItem]:
 		name_converter = _SM_name_converter,
 		value_converter = _chart_to_msd_vcv,
 		filterer = lambda n, _, v: (n != 'timing_data') and (v is not None)
-	))
+	)) # type: ignore
 	return items
 
 

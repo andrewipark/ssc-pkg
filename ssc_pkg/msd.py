@@ -204,5 +204,4 @@ def msd_to_attrs_obj(
 			print(f'conversion failed for class {attrs_class} variable {name}')
 			raise e
 
-	# NOTE blocked https://github.com/python/mypy/issues/5887
-	return attrs_class(**creation_dict), unused_items # type: ignore[call-arg] # noqa: F821
+	return attrs_class(**creation_dict), unused_items # noqa: F821

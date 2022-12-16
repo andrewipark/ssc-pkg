@@ -178,7 +178,8 @@ class TestNoteDataSimple(unittest.TestCase):
 		# overlay is in opposition to slicing and clear range
 		a = self.long_jack_interval * self.long_jack_length / 3
 		b = a * 2
-		self.assertEqual(self.long_jack.clear_range(a, b).overlay(self.long_jack[a:b]), self.long_jack)
+		self.assertEqual(
+			self.long_jack.clear_range(a, b).overlay(self.long_jack[a:b]), self.long_jack)  # type: ignore # mypy-slice
 
 	def test_overlay_modes(self):
 		conflict_pos = self.long_jack_interval * self.long_jack_length * 3 / 2
@@ -196,7 +197,7 @@ class TestNoteDataSimple(unittest.TestCase):
 		jack_keep_other = jack_one.overlay(jack_two, OverlayMode.KEEP_OTHER)
 
 		self.assertEqual(len(jack_keep_self), len(jack_keep_other))
-		self.assertEqual(jack_keep_self[:conflict_pos], jack_keep_other[:conflict_pos])
+		self.assertEqual(jack_keep_self[:conflict_pos], jack_keep_other[:conflict_pos])  # type: ignore # mypy-slice
 		self.assertEqual(jack_keep_self[conflict_pos], row_one.notes)
 		self.assertEqual(jack_keep_other[conflict_pos], row_two.notes)
 

@@ -40,7 +40,7 @@ class ChartRegion:
 class Command:
 	'''mixin for type support w/ ``mypy``'''
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs) # type: ignore # mypy-mixin
+		super().__init__(*args, **kwargs)
 
 # actions
 

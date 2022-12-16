@@ -2,25 +2,23 @@ from setuptools import find_packages, setup # type: ignore
 
 setup(
 	name='ssc-pkg',
-	version='0.10',
+	version='0.11',
 
 	packages=find_packages(),
 	include_package_data=True,
 
-	python_requires='~=3.8',
-	# 3.8: required for type introspection and fast local copy
-	# 3.9: (might be) required for less annoying type annotations
+	python_requires='~=3.10',
 
 	install_requires=[
-		'pyyaml~=5.3',
-		'attrs~=19.3',
+		'pyyaml>=6.0',
+		'attrs~=21.4', # TODO weird mypy error with 22.1, probably my fault
 	],
 
 	extras_require={
 		'lint': [ # unit, type, code style testing
-			'mypy~=0.781',
-			'flake8~=3.8,>=3.8.3',
-			'flake8-tabs~=2.2.2',
+			'mypy~=0.991',
+			'flake8==3.9.2', # b/c flake8-tabs: ~=3.0
+			'flake8-tabs~=2.3,>=2.3.2',
 		],
 	},
 
