@@ -1,6 +1,6 @@
 from decimal import Decimal
 from pathlib import PurePosixPath
-from typing import List, Mapping, Optional, Tuple
+from typing import Mapping, Optional
 
 import attr
 
@@ -29,10 +29,10 @@ class TimingData:
 	# ssc
 	delays: Optional[Mapping[_TimingPosition, Decimal]] = None
 	warps: Optional[Mapping[_TimingPosition, Decimal]] = None
-	time_signatures: Optional[Mapping[_TimingPosition, Tuple[int, int]]] = None
+	time_signatures: Optional[Mapping[_TimingPosition, tuple[int, int]]] = None
 	tick_counts: Optional[Mapping[_TimingPosition, int]] = None
 	combo_multipliers: Optional[Mapping[_TimingPosition, ComboMultiplier]] = None
-	speeds: Optional[Mapping[_TimingPosition, Tuple[Decimal, Decimal, str]]] = None
+	speeds: Optional[Mapping[_TimingPosition, tuple[Decimal, Decimal, str]]] = None
 	scrolls: Optional[Mapping[_TimingPosition, Decimal]] = None
 	fakes: Optional[str] = None # TODO unsupported
 
@@ -111,7 +111,7 @@ class Simfile:
 
 	timing_data: TimingData = attr.Factory(TimingData)
 
-	charts: List[Chart] = attr.Factory(list)
+	charts: list[Chart] = attr.Factory(list)
 
 	def is_split_timing(self) -> bool:
 		''''split timing' := any charts have their own timing data,

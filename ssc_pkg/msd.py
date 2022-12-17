@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict as ordered_dict
 from enum import Enum, auto
-from typing import Any, Callable, ClassVar, Iterable, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, ClassVar, Iterable, Optional, Sequence, Type, TypeVar, Union
 from warnings import warn
 
 import attr
@@ -165,6 +165,8 @@ def attrs_obj_to_msd(
 			yield MSDItem(name_converter(name), value_converter(name, val_type, value))
 
 
+# TODO the type annotations appear to be broken
+# attrs 22.1 produces a boatload of mypy failures
 def msd_to_attrs_obj(
 	items: Iterable[MSDItem],
 	attrs_class: Type[_T_obj],
@@ -172,7 +174,7 @@ def msd_to_attrs_obj(
 	value_converter:
 		Callable[[str, Type[_T_val], str], Optional[_T_val]]
 		= lambda tag, value_type, value_str: None # not as useful
-) -> Tuple[_T_obj, Sequence[MSDItem]]:
+) -> tuple[_T_obj, Sequence[MSDItem]]:
 	'''Convert MSD data to an attrs object
 
 	If there are multiple MSD items that resolve to the same field,

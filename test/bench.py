@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from timeit import Timer
-from typing import List, Tuple
 import sys
 
 if __name__ == '__main__':
@@ -31,7 +30,7 @@ attr.set_run_validators(False)
 
 	setup += '\nv = notedata.NoteData(a)'
 
-	d: List[Tuple[str, str, str]] = [
+	d: list[tuple[str, str, str]] = [
 		# ('shift', 'v.shift(20)'),
 		('clear_range', '', 'v.clear_range(420, 7000)'),
 		('slice-mid-60', '', f'v[{TEST_SIZE // 20} : {TEST_SIZE // 5}]'),

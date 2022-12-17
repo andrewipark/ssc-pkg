@@ -5,7 +5,7 @@ from decimal import Decimal
 from enum import Enum, auto
 from pathlib import PurePath
 from typing import (
-	Callable, Iterable, List, Mapping, Optional, Tuple, Type, TypeVar, Union, cast, get_args, get_origin
+	Callable, Iterable, Mapping, Optional, Type, TypeVar, Union, cast, get_args, get_origin
 )
 
 from ssc_pkg import msd, notedata
@@ -14,7 +14,7 @@ from .structs import Chart, Simfile, TimingData
 
 # data for MSD conversions
 
-def _SM_msd_tables() -> Tuple[Mapping[str, str], Mapping[str, str]]:
+def _SM_msd_tables() -> tuple[Mapping[str, str], Mapping[str, str]]:
 	table = [
 		# TimingData
 		('bpm', 'BPMS'),
@@ -93,7 +93,7 @@ _T_val = TypeVar('_T_val')
 
 # # TimingData
 
-def _msd_td_mapping(tag: str, key_type, value_type, data: Iterable[Tuple[str, str]]) -> Mapping:
+def _msd_td_mapping(tag: str, key_type, value_type, data: Iterable[tuple[str, str]]) -> Mapping:
 	value_conv: Callable = lambda x: x
 	key_conv: Callable = key_type
 
@@ -118,8 +118,8 @@ def _msd_to_timing_data_vcv(tag: str, value_type, value: str):
 		if not value:
 			return {}
 		key_type, val_type = get_args(value_type)
-		data: List[Tuple[str, str]] = [
-			cast(Tuple[str, str], v.strip().split('=', 1)) # split only ever returns max len 2
+		data: list[tuple[str, str]] = [
+			cast(tuple[str, str], v.strip().split('=', 1)) # split only ever returns max len 2
 			for v in value.strip().split(',')
 		]
 		return _msd_td_mapping(tag, key_type, val_type, data)
@@ -250,7 +250,7 @@ def _simfile_skel_to_msd(
 	simfile: Simfile,
 	version_tag: Optional[msd.MSDItem] = msd.MSDItem('VERSION', '0.83')
 ) -> Iterable[msd.MSDItem]:
-	items: List[msd.MSDItem] = []
+	items: list[msd.MSDItem] = []
 	if version_tag is not None:
 		items.append(version_tag)
 	items.extend(msd.attrs_obj_to_msd(
@@ -282,7 +282,7 @@ class _ParsingState(Enum):
 
 def text_to_simfile(text: Union[str, Iterable[str]]) -> Simfile: # noqa: C901
 	'''Converts a simfile in sm or ssc format to a Python object'''
-	curr_items: List[msd.MSDItem] = []
+	curr_items: list[msd.MSDItem] = []
 	state: _ParsingState = _ParsingState.BEGIN
 
 	simfile: Simfile
@@ -352,7 +352,7 @@ def simfile_to_sm(sf: Simfile) -> str:
 	if sf.is_split_timing():
 		raise ValueError('split timing charts cannot be converted to sm')
 
-	text: List[str] = []
+	text: list[str] = []
 	text.append(msd.msd_to_text(_simfile_skel_to_msd(sf)))
 
 	for c in sf.charts:
@@ -370,7 +370,7 @@ def simfile_to_sm(sf: Simfile) -> str:
 
 
 def simfile_to_ssc(sf: Simfile) -> str:
-	text: List[str] = []
+	text: list[str] = []
 	text.append(msd.msd_to_text(_simfile_skel_to_msd(sf)))
 
 	for c in sf.charts:

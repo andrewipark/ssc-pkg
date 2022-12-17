@@ -2,7 +2,7 @@
 
 from fractions import Fraction
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Type, TypeVar, Union, get_type_hints
+from typing import Any, Callable, Iterable, Mapping, Type, TypeVar, Union, get_type_hints
 
 import attr
 
@@ -33,7 +33,7 @@ def _chart_from_index(simfile: Simfile, chart_index: int, indices) -> Chart:
 class _Context:
 	'''The equivalent of a stack frame for the manager'''
 
-	variables: Dict[str, Union[commands.VarValue, commands.Def]] = attr.Factory(dict)
+	variables: dict[str, Union[commands.VarValue, commands.Def]] = attr.Factory(dict)
 
 
 # concrete versions of commands data structures
@@ -56,7 +56,7 @@ class ChartRegion:
 class Manager:
 	'''Reference manager class'''
 
-	frames: List[_Context] = attr.Factory(lambda: [_Context()])
+	frames: list[_Context] = attr.Factory(lambda: [_Context()])
 
 	def lookup(self, name: str):
 		'''searches for a variable in the context frames'''

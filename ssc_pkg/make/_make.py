@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable
 
 from ssc_pkg.simfile import Simfile
 from ssc_pkg.transform.abc import MetaTransform
@@ -13,7 +13,7 @@ class MakeTransform(MetaTransform):
 	'''wraps the functionality of :class:`~.parser.Parser`
 	and :class:`~.manager.Manager` into a transform'''
 
-	def data_path(self) -> Tuple[Path, Iterable[str]]:
+	def data_path(self) -> tuple[Path, Iterable[str]]:
 		retval = super().data_path()
 		return (retval[0], ['make'])
 

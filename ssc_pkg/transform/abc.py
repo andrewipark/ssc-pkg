@@ -3,7 +3,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import ClassVar, Iterable, Optional, Tuple
+from typing import ClassVar, Iterable, Optional
 
 from ssc_pkg.simfile import Simfile
 
@@ -63,12 +63,12 @@ class FileTransform(ABC, _Logger):
 
 class MetaTransform(ABC, _Logger):
 	'''ABC for transforms that use both the filesystem and arbitrary config data
-	as well as arbitrary configuration data
+	as well as arbitrary configuration data TODO ??
 	'''
 
 	DEFAULT_METADATA: ClassVar[str] = '__metadata.yaml'
 
-	def data_path(self) -> Tuple[Path, Iterable[str]]:
+	def data_path(self) -> tuple[Path, Iterable[str]]:
 		'''Return the location of the data expected
 
 		The Path value must refer to a file,

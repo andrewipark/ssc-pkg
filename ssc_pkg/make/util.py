@@ -1,6 +1,6 @@
 '''miscellaneous exception niceties'''
 
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Union
 
 
 IndexPath = Sequence[Union[int, str]]
@@ -19,7 +19,7 @@ def exc_index_trace(e: Exception):
 	This collapses index sequences with empty messages.
 	'''
 
-	exc_pairs: List[Tuple[list, Optional[str]]] = []
+	exc_pairs: list[tuple[list, Optional[str]]] = []
 	curr_exc: Optional[BaseException] = e
 	exc_type = type(e)
 
@@ -63,7 +63,7 @@ def index_str(indices: IndexPath) -> str:
 	'''Turns a path of indices into a JSON-like index string'''
 	if not indices:
 		return ''
-	strings: List[str] = [f'.{i}' if isinstance(i, str) else f'[{i}]' for i in indices]
+	strings: list[str] = [f'.{i}' if isinstance(i, str) else f'[{i}]' for i in indices]
 	return ''.join(strings) + ': '
 
 

@@ -8,7 +8,7 @@ from fractions import Fraction
 from itertools import chain, groupby
 from math import gcd
 from numbers import Rational
-from typing import Generic, Iterable, List, Sequence, Union, TypeVar, overload
+from typing import Generic, Iterable, Sequence, Union, TypeVar, overload
 
 import attr
 
@@ -50,7 +50,7 @@ class _NoteRow(Generic[NoteType]):
 
 
 # NOTE blocked https://github.com/python/mypy/issues/7912 should be internal @classmethod
-def _normalize_notes(notes_list: Iterable[_NoteRow]) -> List[_NoteRow]:
+def _normalize_notes(notes_list: Iterable[_NoteRow]) -> list[_NoteRow]:
 	return sorted(notes_list, key = lambda r: r.position)
 
 
@@ -64,7 +64,7 @@ class NoteData(Generic[NoteType]):
 	semantic data about what notes actually mean.
 	'''
 
-	def __validate_notes(self, _, notes_list: List[_NoteRow]):
+	def __validate_notes(self, _, notes_list: list[_NoteRow]):
 		if len(note_row_lengths := set(len(r.notes) for r in notes_list)) > 1:
 			raise ValueError(
 				f'note rows have different lengths ({list(note_row_lengths)}) and are not homogenous'
@@ -76,7 +76,7 @@ class NoteData(Generic[NoteType]):
 				raise IndexError(f'rows {i-1} and {i} have identical position {prev.position}')
 
 	# all the notes stored by this object, in [beat: notes] form
-	_notes: List[_NoteRow[NoteType]] = attr.ib(
+	_notes: list[_NoteRow[NoteType]] = attr.ib(
 		factory=list, converter=_normalize_notes, validator=__validate_notes
 	)
 
@@ -235,8 +235,8 @@ class NoteData(Generic[NoteType]):
 
 
 def sm_to_notedata(data: str) -> NoteData[str]:
-	measures: List[List[str]] = [m.strip().split() for m in data.split(_SM_TEXT_MEASURE_SEP)]
-	measure_notes: List[List[_NoteRow]] = [
+	measures: list[list[str]] = [m.strip().split() for m in data.split(_SM_TEXT_MEASURE_SEP)]
+	measure_notes: list[list[_NoteRow]] = [
 		[
 			_NoteRow((Fraction(row_index, len(measure)) + measure_index) * _SM_TEXT_BEATS_PER_MEASURE, row)
 			for row_index, row in enumerate(measure)
@@ -259,7 +259,7 @@ def _lcm(it):
 
 
 def notedata_to_sm(data: NoteData[str]) -> str:
-	measures_text: List[str] = []
+	measures_text: list[str] = []
 	EMPTY_ROW = '0' * len(data._notes[0].notes)
 
 	# group notes by measure

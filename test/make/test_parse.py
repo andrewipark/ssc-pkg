@@ -1,6 +1,6 @@
 import unittest
 from fractions import Fraction
-from typing import Any, Iterable, Mapping, Sequence, Tuple, Type
+from typing import Any, Iterable, Mapping, Sequence, Type
 
 import attr
 
@@ -42,7 +42,7 @@ EXAMPLE_PARSE_FRACTIONS: Mapping[str, Fraction] = {
 '''Things that should parse as fractions'''
 
 
-EXAMPLE_PARSE_CHARTPOINT_PREFIXES: Mapping[str, Tuple] = {
+EXAMPLE_PARSE_CHARTPOINT_PREFIXES: Mapping[str, tuple] = {
 	'2 ~': (2, None),
 	'river ~': (c.VarRef('river'), None),
 	'ba @ 3 ~ ': (c.VarRef('ba'), c.VarRef('3')),

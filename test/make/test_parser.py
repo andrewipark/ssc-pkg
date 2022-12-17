@@ -1,6 +1,6 @@
 import unittest
 from fractions import Fraction
-from typing import Any, Callable, Sequence, Tuple, Type, TypeVar
+from typing import Any, Callable, Sequence, Type, TypeVar
 
 import ssc_pkg.make.commands as c
 from ssc_pkg.make.parser import ParseError, Parser
@@ -29,7 +29,7 @@ class TestParser(unittest.TestCase):
 		result_type: Type[_T],
 	): # noqa: E125
 		'''test helper for parse trees where a sub object is a Group'''
-		blocks: Sequence[Tuple[Sequence, Sequence[c.Command]]] = [
+		blocks: Sequence[tuple[Sequence, Sequence[c.Command]]] = [
 			([], []),
 			([{'pragma': 'one_pragma'}], [c.Pragma('one_pragma', None)]),
 			([[]], [c.Group([])]),

@@ -8,7 +8,7 @@ import shutil
 from collections import deque
 from pathlib import Path
 from time import perf_counter_ns
-from typing import Any, Callable, Iterable, List, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from yaml import load
 
@@ -83,7 +83,7 @@ def get_file_list(
 		yield curr
 
 
-def regex_path_name_match(regex: List[str]) -> Callable[[Path], bool]:
+def regex_path_name_match(regex: list[str]) -> Callable[[Path], bool]:
 	"""Return a function that:
 	Given a path, return regex matches.
 	"""
@@ -100,7 +100,7 @@ def what_is_log_helper(path: Path):
 		logging.warning(f"'{path}' is an unexpected object statted as:\n{path.stat()}")
 
 
-def ignore_regex_log_helper(path: Path, matches: List[re.Match]):
+def ignore_regex_log_helper(path: Path, matches: list[re.Match]):
 	"""Output helpful information about regex matches"""
 	logging.debug(f"'{path}' ignored because of regexes: "
 		+ ', '.join([
@@ -153,7 +153,7 @@ def _load_metatransform_data(transform_obj, target: Path, original: Path, max_de
 
 	# too bad if this file doesn't have what we want, even if another one does
 
-	path_so_far: List[str] = []
+	path_so_far: list[str] = []
 	for key in key_path:
 		try:
 			data = data[key]

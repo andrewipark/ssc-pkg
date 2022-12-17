@@ -5,7 +5,7 @@ Also technically *structured* YAML lexer functions
 
 import re
 from fractions import Fraction
-from typing import Any, Callable, List, Sequence, TypeVar, Union, cast
+from typing import Any, Callable, Sequence, TypeVar, Union, cast
 
 from . import commands
 from .util import IndexPath
@@ -82,7 +82,7 @@ def check_sequence_type(what, value: Callable[[Any], _T]) -> Sequence[_T]:
 	'''recursive check for :func:`get` with lists of expected homogenous type'''
 	# looks sort of like a get variant...
 	what = check_sequence(what)
-	ret: List[_T] = [cast(_T, None)] * len(what)
+	ret: list[_T] = [cast(_T, None)] * len(what)
 	# by the end, all the Nones will be overwritten so the list invariant is still ok
 	for i, v in enumerate(what):
 		try:
