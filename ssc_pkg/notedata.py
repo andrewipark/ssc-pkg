@@ -19,8 +19,6 @@ Position = Fraction
 NoteType = TypeVar('NoteType', bound=Sequence)
 
 
-# NOTE blocked https://github.com/python/mypy/issues/3186
-# mypy doesn't work with numbers tower, so we have to write out types explicitly
 PositionSafe = Union[Position, int, Rational]
 '''Describes the types that are compatible with :const:`Position`.
 

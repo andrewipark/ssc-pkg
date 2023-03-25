@@ -16,12 +16,12 @@ classifiers = [
 requires-python = "~=3.10"
 dependencies = [
 	"pyyaml>=6.0",
-	"attrs~=21.4", # TODO weird mypy error with 22.1, probably my fault
+	"attrs~=22.2",
 ]
 
 [project.optional-dependencies]
 lint = [
-	"mypy~=0.991",
+	"mypy~=1.1.1",
 	"flake8==3.9.2", # b/c flake8-tabs: ~=3.0
 	"flake8-tabs~=2.3,>=2.3.2",
 ]

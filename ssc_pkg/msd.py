@@ -128,7 +128,7 @@ def msd_to_text(items: Iterable[MSDItem]) -> str:
 
 
 # type variable helpers
-_T_obj = TypeVar('_T_obj')
+_T_obj = TypeVar('_T_obj', bound=attr.AttrsInstance)
 _T_val = TypeVar('_T_val')
 
 
@@ -165,8 +165,6 @@ def attrs_obj_to_msd(
 			yield MSDItem(name_converter(name), value_converter(name, val_type, value))
 
 
-# TODO the type annotations appear to be broken
-# attrs 22.1 produces a boatload of mypy failures
 def msd_to_attrs_obj(
 	items: Iterable[MSDItem],
 	attrs_class: Type[_T_obj],
@@ -182,7 +180,6 @@ def msd_to_attrs_obj(
 	but the duplicate items will not be returned.
 	'''
 	attr_field_data = attr.fields_dict(attrs_class)
-	assert attrs_class is not object, 'mypy'
 
 	unused_items = []
 	creation_dict = {}
