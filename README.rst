@@ -6,14 +6,14 @@ Utility to build and package simfiles for easy distribution
 Installation
 ------------
 
-``pip3 install --use-pep517 -e .``
+``pip3 install -e .``
 
 Prerequisites
 ^^^^^^^^^^^^^
 
-See `setup.py`_ for exact Python requirements,
+See `pyproject.toml`_ for exact Python requirements.
 
-.. _setup.py: setup.py
+.. _pyproject.toml: pyproject.toml
 
 License
 -------
