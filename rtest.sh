@@ -15,4 +15,8 @@ fi
 
 $PYTHONEXEC -W error -m unittest discover
 
-flake8
+time flake8
+
+if command -v ruff > /dev/null 2>&1; then
+	time ruff check .
+fi

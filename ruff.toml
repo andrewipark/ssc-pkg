@@ -1,0 +1,22 @@
+line-length = 115
+# TODO
+# definitely useful: PTH, RUF100
+# potentially useful: B, A, C4, RET, SIM
+select = [
+	'E', 'F', 'W',
+	'UP',
+	'FBT',
+	'EXE',
+	'G010', 'G201', 'G202',
+]
+ignore = [
+	# this project uses tabs
+	'W191',
+	# TODO fix old type hint syntax from when this project was Python 3.8
+	'UP006', 'UP007', 'UP035',
+	# unlikely to ever be fixed
+	'I',
+	'N',
+	# open supports path-like objects
+	'PTH123',
+]

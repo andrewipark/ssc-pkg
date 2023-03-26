@@ -94,7 +94,7 @@ _T_val = TypeVar('_T_val')
 # # TimingData
 
 def _msd_td_mapping(tag: str, key_type, value_type, data: Iterable[tuple[str, str]]) -> Mapping:
-	value_conv: Callable = lambda x: x
+	value_conv: Callable = lambda x: x # noqa: E731
 	key_conv: Callable = key_type
 
 	if value_type is Decimal or value_type is str or value_type is int:
