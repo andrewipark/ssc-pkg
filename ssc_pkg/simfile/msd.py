@@ -118,7 +118,7 @@ def _msd_to_timing_data_vcv(tag: str, value_type, value: str):
 		if not value:
 			return {}
 		key_type, val_type = get_args(value_type)
-		data: list[tuple[str, str]] = [
+		data = [
 			cast(tuple[str, str], v.strip().split('=', 1)) # split only ever returns max len 2
 			for v in value.strip().split(',')
 		]
