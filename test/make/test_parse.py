@@ -81,13 +81,13 @@ def types_except(*types: type) -> Iterable[type]:
 
 
 class TestParse(unittest.TestCase):
-	def _easy_helper(self, t: type, c):
-		for v in EXAMPLE_OBJS[t]:
-			self.assertEqual(c(v), v)
-		for t in types_except(t):
+	def _easy_helper(self, input_type: type, check_fn):
+		for v in EXAMPLE_OBJS[input_type]:
+			self.assertEqual(check_fn(v), v)
+		for t in types_except(input_type):
 			for v in EXAMPLE_OBJS[t]:
 				with self.assertRaises(TypeError, msg=str(v)):
-					c(v)
+					check_fn(v)
 
 	def test_check_get_u(self):
 		# even though the index type isn't strictly supported,
@@ -173,7 +173,7 @@ class TestParse(unittest.TestCase):
 		for s in EXAMPLE_OBJS[str]:
 			with self.assertRaises(ValueError, msg=s):
 				p.parse_ChartPoint(s)
-			for fs, f in EXAMPLE_PARSE_FRACTIONS.items():
+			for fs in EXAMPLE_PARSE_FRACTIONS:
 				v = fs + s
 				with self.assertRaises(ValueError, msg=v):
 					p.parse_ChartPoint(v)
